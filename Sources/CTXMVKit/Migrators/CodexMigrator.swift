@@ -9,6 +9,7 @@ struct CodexMigrator: SessionMigrator, Sendable {
 
     private enum StorageDefaults {
         static let sessionsDirectory = ".codex/sessions"
+        static let snapSessionsDirectory = "snap/codex/current/.codex/sessions"
         static let filePrefix = "rollout"
     }
 
@@ -92,8 +93,15 @@ struct CodexMigrator: SessionMigrator, Sendable {
     }
 
     /// Codex stores sessions under `~/.codex/sessions/<year>/<month>/<day>/`.
+    /// Snap-packaged Codex remaps HOME to `~/snap/codex/<rev>/`, so sessions must be
+    /// written there for `codex resume` to find them.
     private func sessionsBaseDirectory() -> URL {
-        fileSystem.homeDirectoryForCurrentUser.appendingPathComponent(StorageDefaults.sessionsDirectory)
+        let home = fileSystem.homeDirectoryForCurrentUser
+        let snapDir = home.appendingPathComponent("snap/codex")
+        if fileSystem.fileExists(atPath: snapDir.path) {
+            return home.appendingPathComponent(StorageDefaults.snapSessionsDirectory)
+        }
+        return home.appendingPathComponent(StorageDefaults.sessionsDirectory)
     }
 
     private func ensureNoExistingMigration(
