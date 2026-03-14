@@ -87,7 +87,7 @@ jobs:
           VERSION: ${{ inputs.version }}
 
       - name: Upload release archive
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ctxmv-darwin-universal
           path: |
@@ -96,7 +96,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload binary for artifact bundle
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: binary-macos
           path: .build/apple/Products/Release/ctxmv
@@ -153,7 +153,7 @@ jobs:
           ARCH: ${{ matrix.arch }}
 
       - name: Upload release archive
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ctxmv-linux-${{ matrix.arch }}
           path: |
@@ -162,7 +162,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload binary for artifact bundle
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: binary-linux-${{ matrix.arch }}
           path: .build/release/ctxmv
@@ -184,24 +184,24 @@ jobs:
           VERSION: ${{ inputs.version }}
 
       - name: Download all release archives
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           pattern: ctxmv-*
           path: /tmp/release-assets
           merge-multiple: true
 
       - name: Download binaries for artifact bundle
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: binary-macos
           path: /tmp/binaries/macos
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: binary-linux-x86_64
           path: /tmp/binaries/linux-x86_64
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: binary-linux-arm64
           path: /tmp/binaries/linux-arm64
