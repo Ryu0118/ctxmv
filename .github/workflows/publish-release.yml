@@ -1,4 +1,4 @@
-name: Prepare Release
+name: Publish Release
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 jobs:
-  prepare:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
