@@ -86,14 +86,14 @@ struct CodexMigratorTests {
         let lines = jsonl.split(separator: "\n").map(String.init)
 
         #expect(jsonl.hasSuffix("\n"))
-        // migration meta + session_meta + user event + assistant event + assistant response_item
+        // session_meta + user event + assistant event + assistant response_item + migration meta
         #expect(lines.count == 5)
 
-        let meta = try #require(decode(lines[0], as: MigrationMeta.self))
-        #expect(meta.type == MigrationMeta.migrationType)
-
-        let sessionMeta = try #require(decode(lines[1], as: CodexEntry.self))
+        let sessionMeta = try #require(decode(lines[0], as: CodexEntry.self))
         #expect(sessionMeta.entryType == .sessionMeta)
+
+        let meta = try #require(decode(lines[4], as: MigrationMeta.self))
+        #expect(meta.type == MigrationMeta.migrationType)
     }
 
     @Test("migrate writes rollout JSONL into a date-based directory")

@@ -160,11 +160,10 @@ struct CodexSessionDocument: Sendable {
     let migrationMetadata: MigrationMeta
     let entries: [CodexEntry]
 
-    /// Serializes the migration metadata line first, followed by the Codex entries.
+    /// Serializes Codex entries first (session_meta must be line 1), then migration metadata.
     var jsonl: String {
-        let lines = [migrationMetadata]
-            .compactMap(MigratorUtils.encodeLine)
-            + entries.compactMap(MigratorUtils.encodeLine)
+        let lines = entries.compactMap(MigratorUtils.encodeLine)
+            + [migrationMetadata].compactMap(MigratorUtils.encodeLine)
         return lines.joined(separator: "\n") + "\n"
     }
 }

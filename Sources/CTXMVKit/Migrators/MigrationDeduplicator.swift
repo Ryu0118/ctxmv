@@ -188,21 +188,22 @@ enum MigrationDeduplicator {
         guard let data = fileSystem.contents(atPath: file.path),
               let content = String(data: data, encoding: .utf8) else { return nil }
 
-        guard let firstLine = content.components(separatedBy: .newlines).first,
-              !firstLine.isEmpty,
-              let lineData = firstLine.data(using: .utf8) else { return nil }
+        // Migration meta can appear on any line (first for Claude Code, last for Codex).
+        for line in content.components(separatedBy: .newlines) {
+            guard !line.isEmpty, let lineData = line.data(using: .utf8) else { continue }
 
-        if allowBareMetaLine,
-           let meta = try? decoder.decode(MigrationMeta.self, from: lineData),
-           meta.type == MigrationMeta.migrationType
-        {
-            return meta
-        }
+            if allowBareMetaLine,
+               let meta = try? decoder.decode(MigrationMeta.self, from: lineData),
+               meta.type == MigrationMeta.migrationType
+            {
+                return meta
+            }
 
-        if let wrapped = try? decoder.decode(ClaudeProgressMetaLine.self, from: lineData),
-           wrapped.data.type == MigrationMeta.migrationType
-        {
-            return wrapped.data
+            if let wrapped = try? decoder.decode(ClaudeProgressMetaLine.self, from: lineData),
+               wrapped.data.type == MigrationMeta.migrationType
+            {
+                return wrapped.data
+            }
         }
 
         return nil
