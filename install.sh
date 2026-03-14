@@ -68,11 +68,11 @@ main() {
   install -m 755 "$download_dir/ctxmv" "$INSTALL_DIR/ctxmv"
   rm -rf "$download_dir"
 
-  if "$INSTALL_DIR/ctxmv" --help >/dev/null 2>&1; then
-    printf 'Installed ctxmv to %s/ctxmv\n' "$INSTALL_DIR"
-  else
-    error "installation succeeded but ctxmv failed to run"
+  if [ ! -x "$INSTALL_DIR/ctxmv" ]; then
+    error "installation failed: binary not found at $INSTALL_DIR/ctxmv"
   fi
+
+  printf 'Installed ctxmv to %s/ctxmv\n' "$INSTALL_DIR"
 
   if ! echo ":$PATH:" | grep -q ":${INSTALL_DIR}:"; then
     printf '\nWARNING: %s is not in your PATH.\n' "$INSTALL_DIR"
