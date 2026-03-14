@@ -66,3 +66,176 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    needs: publish
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Select Xcode 26.2
+        run: sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer
+
+      - name: Verify Swift 6.2
+        run: xcrun swift --version | grep -E "Swift version 6.2([.]| )"
+
+      - name: Build Universal Binary
+        run: xcrun swift build -c release --arch arm64 --arch x86_64
+
+      - name: Create Archive
+        run: |
+          cd .build/apple/Products/Release
+          tar -czvf "ctxmv-${VERSION}-darwin-universal.tar.gz" ctxmv
+        env:
+          VERSION: ${{ inputs.version }}
+
+      - name: Upload Artifact Bundle Input
+        uses: actions/upload-artifact@v5
+        with:
+          name: ctxmv-macos-binary
+          path: .build/apple/Products/Release/ctxmv
+          if-no-files-found: error
+
+      - name: Upload Release Assets
+        run: |
+          ARCHIVE="ctxmv-${VERSION}-darwin-universal.tar.gz"
+          cd .build/apple/Products/Release
+          shasum -a 256 "$ARCHIVE" > "checksums-darwin.txt"
+          gh release upload "$VERSION" "$ARCHIVE" "checksums-darwin.txt"
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    needs: publish
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: x86_64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.2'
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Build Linux Binary
+        run: swift build -c release --static-swift-stdlib
+
+      - name: Create Archive
+        run: |
+          cd .build/release
+          tar -czvf "ctxmv-${VERSION}-linux-${ARCH}.tar.gz" ctxmv
+        env:
+          VERSION: ${{ inputs.version }}
+          ARCH: ${{ matrix.arch }}
+
+      - name: Upload Artifact Bundle Input
+        uses: actions/upload-artifact@v5
+        with:
+          name: ctxmv-linux-${{ matrix.arch }}-binary
+          path: .build/release/ctxmv
+          if-no-files-found: error
+
+      - name: Upload Release Assets
+        run: |
+          ARCHIVE="ctxmv-${VERSION}-linux-${ARCH}.tar.gz"
+          cd .build/release
+          sha256sum "$ARCHIVE" > "checksums-linux-${ARCH}.txt"
+          gh release upload "$VERSION" "$ARCHIVE" "checksums-linux-${ARCH}.txt"
+        env:
+          VERSION: ${{ inputs.version }}
+          ARCH: ${{ matrix.arch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-artifact-bundle:
+    needs: [build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download macOS binary
+        uses: actions/download-artifact@v5
+        with:
+          name: ctxmv-macos-binary
+          path: /tmp/ctxmv-artifacts/macos
+
+      - name: Download Linux x86_64 binary
+        uses: actions/download-artifact@v5
+        with:
+          name: ctxmv-linux-x86_64-binary
+          path: /tmp/ctxmv-artifacts/linux-x86_64
+
+      - name: Download Linux arm64 binary
+        uses: actions/download-artifact@v5
+        with:
+          name: ctxmv-linux-arm64-binary
+          path: /tmp/ctxmv-artifacts/linux-arm64
+
+      - name: Create Artifact Bundle
+        run: |
+          BUNDLE_NAME="ctxmv.artifactbundle"
+          ARCHIVE_NAME="ctxmv-${VERSION}.artifactbundle.zip"
+
+          rm -rf "$BUNDLE_NAME" "$ARCHIVE_NAME"
+          mkdir -p "$BUNDLE_NAME/ctxmv-macos/bin" \
+                   "$BUNDLE_NAME/ctxmv-linux-x86_64/bin" \
+                   "$BUNDLE_NAME/ctxmv-linux-arm64/bin"
+
+          cp /tmp/ctxmv-artifacts/macos/ctxmv "$BUNDLE_NAME/ctxmv-macos/bin/ctxmv"
+          cp /tmp/ctxmv-artifacts/linux-x86_64/ctxmv "$BUNDLE_NAME/ctxmv-linux-x86_64/bin/ctxmv"
+          cp /tmp/ctxmv-artifacts/linux-arm64/ctxmv "$BUNDLE_NAME/ctxmv-linux-arm64/bin/ctxmv"
+          chmod +x "$BUNDLE_NAME/ctxmv-macos/bin/ctxmv" \
+                   "$BUNDLE_NAME/ctxmv-linux-x86_64/bin/ctxmv" \
+                   "$BUNDLE_NAME/ctxmv-linux-arm64/bin/ctxmv"
+
+          cat > "$BUNDLE_NAME/info.json" <<EOF
+          {
+            "schemaVersion": "1.0",
+            "artifacts": {
+              "ctxmv": {
+                "version": "${VERSION}",
+                "type": "executable",
+                "variants": [
+                  {
+                    "path": "ctxmv-macos/bin/ctxmv",
+                    "supportedTriples": ["x86_64-apple-macosx", "arm64-apple-macosx"]
+                  },
+                  {
+                    "path": "ctxmv-linux-x86_64/bin/ctxmv",
+                    "supportedTriples": ["x86_64-unknown-linux-gnu"]
+                  },
+                  {
+                    "path": "ctxmv-linux-arm64/bin/ctxmv",
+                    "supportedTriples": ["aarch64-unknown-linux-gnu"]
+                  }
+                ]
+              }
+            }
+          }
+          EOF
+
+          zip -r "$ARCHIVE_NAME" "$BUNDLE_NAME"
+          sha256sum "$ARCHIVE_NAME" > checksums-artifactbundle.txt
+        env:
+          VERSION: ${{ inputs.version }}
+
+      - name: Upload Release Assets
+        run: |
+          gh release upload \
+            "$VERSION" \
+            "ctxmv-${VERSION}.artifactbundle.zip" \
+            checksums-artifactbundle.txt
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
