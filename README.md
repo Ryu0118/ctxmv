@@ -4,7 +4,7 @@ A CLI tool to migrate conversation sessions between AI coding agents.
 
 Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent`, not the GUI app).
 
-**Platforms:** macOS and Linux (x86_64).
+**Platforms:** macOS (Apple Silicon / Intel) and Linux (x86_64 / arm64).
 
 | Claude Code | Codex | Cursor |
 |:-:|:-:|:-:|

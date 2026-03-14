@@ -46,9 +46,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: write
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: x86_64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
     steps:
       - uses: actions/checkout@v6
 
@@ -66,25 +73,27 @@ jobs:
       - name: Create Archive
         run: |
           cd .build/release
-          tar -czvf "ctxmv-${TAG_NAME}-linux-x86_64.tar.gz" ctxmv
+          tar -czvf "ctxmv-${TAG_NAME}-linux-${ARCH}.tar.gz" ctxmv
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
+          ARCH: ${{ matrix.arch }}
 
       - name: Upload Artifact Bundle Input
         uses: actions/upload-artifact@v5
         with:
-          name: ctxmv-linux-binary
+          name: ctxmv-linux-${{ matrix.arch }}-binary
           path: .build/release/ctxmv
           if-no-files-found: error
 
       - name: Upload Release Assets
         run: |
-          ARCHIVE="ctxmv-${TAG_NAME}-linux-x86_64.tar.gz"
+          ARCHIVE="ctxmv-${TAG_NAME}-linux-${ARCH}.tar.gz"
           cd .build/release
-          sha256sum "$ARCHIVE" > "checksums-linux.txt"
-          gh release upload "$TAG_NAME" "$ARCHIVE" "checksums-linux.txt"
+          sha256sum "$ARCHIVE" > "checksums-linux-${ARCH}.txt"
+          gh release upload "$TAG_NAME" "$ARCHIVE" "checksums-linux-${ARCH}.txt"
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
+          ARCH: ${{ matrix.arch }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-artifact-bundle:
@@ -101,11 +110,17 @@ jobs:
           name: ctxmv-macos-binary
           path: /tmp/ctxmv-artifacts/macos
 
-      - name: Download Linux binary
+      - name: Download Linux x86_64 binary
         uses: actions/download-artifact@v5
         with:
-          name: ctxmv-linux-binary
-          path: /tmp/ctxmv-artifacts/linux
+          name: ctxmv-linux-x86_64-binary
+          path: /tmp/ctxmv-artifacts/linux-x86_64
+
+      - name: Download Linux arm64 binary
+        uses: actions/download-artifact@v5
+        with:
+          name: ctxmv-linux-arm64-binary
+          path: /tmp/ctxmv-artifacts/linux-arm64
 
       - name: Create Artifact Bundle
         run: |
@@ -113,11 +128,16 @@ jobs:
           ARCHIVE_NAME="ctxmv-${TAG_NAME}.artifactbundle.zip"
 
           rm -rf "$BUNDLE_NAME" "$ARCHIVE_NAME"
-          mkdir -p "$BUNDLE_NAME/ctxmv-macos/bin" "$BUNDLE_NAME/ctxmv-linux/bin"
+          mkdir -p "$BUNDLE_NAME/ctxmv-macos/bin" \
+                   "$BUNDLE_NAME/ctxmv-linux-x86_64/bin" \
+                   "$BUNDLE_NAME/ctxmv-linux-arm64/bin"
 
           cp /tmp/ctxmv-artifacts/macos/ctxmv "$BUNDLE_NAME/ctxmv-macos/bin/ctxmv"
-          cp /tmp/ctxmv-artifacts/linux/ctxmv "$BUNDLE_NAME/ctxmv-linux/bin/ctxmv"
-          chmod +x "$BUNDLE_NAME/ctxmv-macos/bin/ctxmv" "$BUNDLE_NAME/ctxmv-linux/bin/ctxmv"
+          cp /tmp/ctxmv-artifacts/linux-x86_64/ctxmv "$BUNDLE_NAME/ctxmv-linux-x86_64/bin/ctxmv"
+          cp /tmp/ctxmv-artifacts/linux-arm64/ctxmv "$BUNDLE_NAME/ctxmv-linux-arm64/bin/ctxmv"
+          chmod +x "$BUNDLE_NAME/ctxmv-macos/bin/ctxmv" \
+                   "$BUNDLE_NAME/ctxmv-linux-x86_64/bin/ctxmv" \
+                   "$BUNDLE_NAME/ctxmv-linux-arm64/bin/ctxmv"
 
           cat > "$BUNDLE_NAME/info.json" <<EOF
           {
@@ -132,8 +152,12 @@ jobs:
                     "supportedTriples": ["x86_64-apple-macosx", "arm64-apple-macosx"]
                   },
                   {
-                    "path": "ctxmv-linux/bin/ctxmv",
+                    "path": "ctxmv-linux-x86_64/bin/ctxmv",
                     "supportedTriples": ["x86_64-unknown-linux-gnu"]
+                  },
+                  {
+                    "path": "ctxmv-linux-arm64/bin/ctxmv",
+                    "supportedTriples": ["aarch64-unknown-linux-gnu"]
                   }
                 ]
               }
