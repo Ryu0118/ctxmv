@@ -4,6 +4,8 @@ A CLI tool to migrate conversation sessions between AI coding agents.
 
 Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent`, not the GUI app).
 
+**Platforms:** macOS and Linux (x86_64).
+
 | Claude Code | Codex | Cursor |
 |:-:|:-:|:-:|
 | ![Claude Code](assets/demo-claude-code.png) | ![Codex](assets/demo-codex.png) | ![Cursor](assets/demo-cursor.png) |
@@ -18,6 +20,16 @@ Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | bash
+```
+
+To update, run the same command. It skips the download if already up-to-date.
+
+```bash
+# Install a specific version
+VERSION=0.1.0 curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | bash
+
+# Force reinstall
+FORCE=1 curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | bash
 ```
 
 ### Other methods
