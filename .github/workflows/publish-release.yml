@@ -14,6 +14,8 @@ permissions:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    outputs:
+      commit_sha: ${{ steps.push.outputs.sha }}
     steps:
       - uses: actions/checkout@v6
 
@@ -43,7 +45,8 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
 
-      - name: Commit, tag, and push
+      - name: Commit and push
+        id: push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -52,9 +55,9 @@ jobs:
             echo "Version.swift already at $VERSION, skipping commit"
           else
             git commit -m "chore: bump version to $VERSION"
+            git push origin main
           fi
-          git tag "$VERSION"
-          git push origin main --tags
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         env:
           VERSION: ${{ inputs.version }}
 
@@ -64,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.version }}
+          ref: ${{ needs.prepare.outputs.commit_sha }}
 
       - name: Select Xcode 26.2
         run: sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer
@@ -109,7 +112,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.version }}
+          ref: ${{ needs.prepare.outputs.commit_sha }}
 
       - name: Install Swift (setup-swift)
         if: matrix.arch == 'x86_64'
@@ -163,9 +166,20 @@ jobs:
           if-no-files-found: error
 
   create-release:
-    needs: [build-macos, build-linux]
+    needs: [prepare, build-macos, build-linux]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit_sha }}
+
+      - name: Create tag
+        run: |
+          git tag "$VERSION"
+          git push origin "$VERSION"
+        env:
+          VERSION: ${{ inputs.version }}
+
       - name: Download all release archives
         uses: actions/download-artifact@v5
         with:
@@ -241,7 +255,6 @@ jobs:
             /tmp/release-assets/* \
             "ctxmv-${VERSION}.artifactbundle.zip" \
             "ctxmv-${VERSION}.artifactbundle.zip.sha256" \
-            --repo "$GITHUB_REPOSITORY" \
             --title "$VERSION" \
             --generate-notes
         env:
