@@ -24,7 +24,7 @@ nest install Ryu0118/ctxmv
 mise use -g ubi:Ryu0118/ctxmv
 ```
 
-### Nix
+### Nix ([NixOS/nix](https://github.com/NixOS/nix))
 
 ```bash
 nix run github:Ryu0118/ctxmv
