@@ -3,6 +3,7 @@ set -euo pipefail
 
 REPO="Ryu0118/ctxmv"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
+CLEANUP_DIR=""
 
 detect_platform() {
   local os arch
@@ -39,8 +40,7 @@ fetch_latest_tag() {
 }
 
 main() {
-  local platform tag archive_url
-  local tmp=""
+  local platform tag archive_url tmp
 
   platform="$(detect_platform)"
   tag="$(fetch_latest_tag)"
@@ -55,7 +55,8 @@ main() {
   echo "Installing ctxmv ${tag} (${platform})..."
 
   tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' EXIT
+  CLEANUP_DIR="$tmp"
+  trap 'rm -rf "$CLEANUP_DIR"' EXIT
 
   curl -fsSL "$archive_url" | tar xz -C "$tmp"
   mkdir -p "$INSTALL_DIR"
