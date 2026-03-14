@@ -1,8 +1,14 @@
 # ctxmv
 
+[![Language](https://img.shields.io/badge/Language-Swift-F05138?style=flat-square)](https://www.swift.org)
+[![License](https://img.shields.io/badge/License-MIT-007ec6?style=flat-square)](LICENSE)
+[![release](https://img.shields.io/github/v/release/Ryu0118/ctxmv?style=flat-square)](https://github.com/Ryu0118/ctxmv/releases/latest)
+[![Platform Compatibility](https://img.shields.io/badge/Platform%20Compatibility-macOS%20%7C%20Linux-ff8a3d?style=flat-square)](#ctxmv)
+[![Follow @ryu_hu03](https://img.shields.io/badge/Follow-%40ryu__hu03-ffffff?style=flat-square&logo=x&logoColor=000000&labelColor=ffffff&color=ffffff)](https://x.com/ryu_hu03)
+
 A CLI tool to migrate conversation sessions between AI coding agents.
 
-You no longer need to suffer through rate limits: when one coding agent hits its limit, migrate the session to another and keep going.
+✨ **You no longer need to suffer through rate limits: when one coding agent hits its limit, migrate the session to another and keep going.**
 
 Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent`, not the GUI app).
 
