@@ -18,6 +18,7 @@ public struct CTXMVCommand: AsyncParsableCommand {
         Default action (no subcommand): migrate a session.
         Example: ctxmv <session-id> --to <claude-code|codex|cursor>
         """,
+        version: CTXMVVersion.current,
         subcommands: [MigrateCommand.self, ListCommand.self, ShowCommand.self],
         defaultSubcommand: MigrateCommand.self
     )

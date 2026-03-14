@@ -2,11 +2,17 @@
 set -eu
 
 REPO="Ryu0118/ctxmv"
+BIN_NAME="ctxmv"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
+FORCE="${FORCE:-}"
 
 error() {
   printf 'error: %s\n' "$1" >&2
   exit 1
+}
+
+info() {
+  printf '%s\n' "$1"
 }
 
 detect_platform() {
@@ -40,39 +46,101 @@ fetch_latest_tag() {
     | tr -d '\r\n'
 }
 
+installed_version() {
+  local bin=""
+  if command -v "$BIN_NAME" >/dev/null 2>&1; then
+    bin="$(command -v "$BIN_NAME")"
+  elif [ -x "$INSTALL_DIR/$BIN_NAME" ]; then
+    bin="$INSTALL_DIR/$BIN_NAME"
+  fi
+
+  if [ -n "$bin" ]; then
+    "$bin" --version 2>/dev/null | head -1 | sed 's/[^0-9.]//g' || true
+  fi
+}
+
+needs_sudo() {
+  if [ -d "$INSTALL_DIR" ]; then
+    [ ! -w "$INSTALL_DIR" ]
+  else
+    local parent="$INSTALL_DIR"
+    while [ ! -d "$parent" ]; do
+      parent="$(dirname "$parent")"
+    done
+    [ ! -w "$parent" ]
+  fi
+}
+
+run_cmd() {
+  if needs_sudo; then
+    if ! command -v sudo >/dev/null 2>&1; then
+      error "$INSTALL_DIR is not writable and sudo is not available"
+    fi
+    info "Elevated permissions required for $INSTALL_DIR"
+    sudo "$@"
+  else
+    "$@"
+  fi
+}
+
 main() {
   command -v curl >/dev/null 2>&1 || error "curl is required but not found"
   command -v tar >/dev/null 2>&1 || error "tar is required but not found"
 
-  local platform tag archive_url download_dir
+  local platform version archive_url download_dir
 
   platform="$(detect_platform)"
-  tag="$(fetch_latest_tag)"
 
-  if [ -z "$tag" ]; then
-    error "failed to fetch latest release tag"
+  if [ -n "${VERSION:-}" ]; then
+    version="$VERSION"
+  else
+    version="$(fetch_latest_tag)"
   fi
 
-  archive_url="https://github.com/${REPO}/releases/download/${tag}/ctxmv-${tag}-${platform}.tar.gz"
+  if [ -z "$version" ]; then
+    error "failed to determine version to install"
+  fi
 
-  printf 'Installing ctxmv %s (%s)...\n' "$tag" "$platform"
+  local clean_version
+  clean_version="$(echo "$version" | sed 's/^v//')"
+  local current
+  current="$(installed_version)"
+
+  if [ -n "$current" ] && [ "$current" = "$clean_version" ] && [ -z "$FORCE" ]; then
+    info "$BIN_NAME $clean_version is already installed. Use FORCE=1 to reinstall."
+    exit 0
+  fi
+
+  archive_url="https://github.com/${REPO}/releases/download/${version}/${BIN_NAME}-${version}-${platform}.tar.gz"
+
+  if [ -n "$current" ]; then
+    info "Updating $BIN_NAME $current -> $clean_version ($platform)..."
+  else
+    info "Installing $BIN_NAME $clean_version ($platform)..."
+  fi
 
   download_dir="$(mktemp -d)"
 
   if ! curl -fsSL "$archive_url" | tar xz -C "$download_dir"; then
     rm -rf "$download_dir"
-    error "failed to download or extract ctxmv"
+    error "failed to download or extract $BIN_NAME $version"
   fi
 
-  mkdir -p "$INSTALL_DIR"
-  install -m 755 "$download_dir/ctxmv" "$INSTALL_DIR/ctxmv"
+  if [ ! -f "$download_dir/$BIN_NAME" ]; then
+    rm -rf "$download_dir"
+    error "binary not found in archive"
+  fi
+
+  chmod +x "$download_dir/$BIN_NAME"
+  run_cmd mkdir -p "$INSTALL_DIR"
+  run_cmd mv -f "$download_dir/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
   rm -rf "$download_dir"
 
-  if [ ! -x "$INSTALL_DIR/ctxmv" ]; then
-    error "installation failed: binary not found at $INSTALL_DIR/ctxmv"
+  if [ ! -x "$INSTALL_DIR/$BIN_NAME" ]; then
+    error "installation failed: $INSTALL_DIR/$BIN_NAME not found"
   fi
 
-  printf 'Installed ctxmv to %s/ctxmv\n' "$INSTALL_DIR"
+  info "Installed $BIN_NAME $clean_version to $INSTALL_DIR/$BIN_NAME"
 
   if ! echo ":$PATH:" | grep -q ":${INSTALL_DIR}:"; then
     printf '\nWARNING: %s is not in your PATH.\n' "$INSTALL_DIR"
