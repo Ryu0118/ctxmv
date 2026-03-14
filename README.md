@@ -24,8 +24,6 @@ nest install Ryu0118/ctxmv
 mise use -g ubi:Ryu0118/ctxmv
 ```
 
-`nest install Ryu0118/ctxmv` uses the release artifact bundle automatically, while the `ubi:` backend in mise installs from the platform-specific GitHub release archives.
-
 ### Nix
 
 ```bash
