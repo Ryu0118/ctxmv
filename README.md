@@ -1,4 +1,4 @@
-# ctxmv
+# ctxmv - A CLI tool to migrate conversation sessions between AI coding agents.
 
 [![Language](https://img.shields.io/badge/Language-Swift-F05138?style=flat-square)](https://www.swift.org)
 [![License](https://img.shields.io/badge/License-MIT-007ec6?style=flat-square)](LICENSE)
