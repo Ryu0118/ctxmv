@@ -12,13 +12,13 @@ Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent
 
 ## Install
 
-### Nest
+### Nest ([mtj0928/nest](https://github.com/mtj0928/nest))
 
 ```bash
 nest install Ryu0118/ctxmv
 ```
 
-### Mise
+### Mise ([jdx/mise](https://github.com/jdx/mise))
 
 ```bash
 mise use -g ubi:Ryu0118/ctxmv
