@@ -4,6 +4,9 @@ import PackageDescription
 
 let package = Package(
     name: "ctxmv",
+    platforms: [
+        .macOS(.v15),
+    ],
     products: [
         .executable(name: "ctxmv", targets: ["ctxmv"]),
     ],
