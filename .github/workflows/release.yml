@@ -1,0 +1,156 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Select Xcode 26.2
+        run: sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer
+
+      - name: Verify Swift 6.2
+        run: xcrun swift --version | grep -E "Swift version 6.2([.]| )"
+
+      - name: Build Universal Binary
+        run: xcrun swift build -c release --arch arm64 --arch x86_64
+
+      - name: Create Archive
+        run: |
+          cd .build/apple/Products/Release
+          tar -czvf "ctxmv-${TAG_NAME}-darwin-universal.tar.gz" ctxmv
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+
+      - name: Upload Artifact Bundle Input
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctxmv-macos-binary
+          path: .build/apple/Products/Release/ctxmv
+          if-no-files-found: error
+
+      - name: Upload Release Assets
+        run: |
+          ARCHIVE="ctxmv-${TAG_NAME}-darwin-universal.tar.gz"
+          cd .build/apple/Products/Release
+          shasum -a 256 "$ARCHIVE" > "checksums-darwin.txt"
+          gh release upload "$TAG_NAME" "$ARCHIVE" "checksums-darwin.txt"
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.2'
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Build Linux Binary
+        run: swift build -c release
+
+      - name: Create Archive
+        run: |
+          cd .build/release
+          tar -czvf "ctxmv-${TAG_NAME}-linux-x86_64.tar.gz" ctxmv
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+
+      - name: Upload Artifact Bundle Input
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctxmv-linux-binary
+          path: .build/release/ctxmv
+          if-no-files-found: error
+
+      - name: Upload Release Assets
+        run: |
+          ARCHIVE="ctxmv-${TAG_NAME}-linux-x86_64.tar.gz"
+          cd .build/release
+          sha256sum "$ARCHIVE" > "checksums-linux.txt"
+          gh release upload "$TAG_NAME" "$ARCHIVE" "checksums-linux.txt"
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-artifact-bundle:
+    runs-on: ubuntu-latest
+    needs: [build-macos, build-linux]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download macOS binary
+        uses: actions/download-artifact@v4
+        with:
+          name: ctxmv-macos-binary
+          path: /tmp/ctxmv-artifacts/macos
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: ctxmv-linux-binary
+          path: /tmp/ctxmv-artifacts/linux
+
+      - name: Create Artifact Bundle
+        run: |
+          BUNDLE_NAME="ctxmv.artifactbundle"
+          ARCHIVE_NAME="ctxmv-${TAG_NAME}.artifactbundle.zip"
+
+          rm -rf "$BUNDLE_NAME" "$ARCHIVE_NAME"
+          mkdir -p "$BUNDLE_NAME/ctxmv-macos/bin" "$BUNDLE_NAME/ctxmv-linux/bin"
+
+          cp /tmp/ctxmv-artifacts/macos/ctxmv "$BUNDLE_NAME/ctxmv-macos/bin/ctxmv"
+          cp /tmp/ctxmv-artifacts/linux/ctxmv "$BUNDLE_NAME/ctxmv-linux/bin/ctxmv"
+
+          cat > "$BUNDLE_NAME/info.json" <<EOF
+          {
+            "schemaVersion": "1.0",
+            "artifacts": {
+              "ctxmv": {
+                "version": "${TAG_NAME}",
+                "type": "executable",
+                "variants": [
+                  {
+                    "path": "ctxmv-macos/bin/ctxmv",
+                    "supportedTriples": ["x86_64-apple-macosx", "arm64-apple-macosx"]
+                  },
+                  {
+                    "path": "ctxmv-linux/bin/ctxmv",
+                    "supportedTriples": ["x86_64-unknown-linux-gnu"]
+                  }
+                ]
+              }
+            }
+          }
+          EOF
+
+          zip -r "$ARCHIVE_NAME" "$BUNDLE_NAME"
+          sha256sum "$ARCHIVE_NAME" > checksums-artifactbundle.txt
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+
+      - name: Upload Release Assets
+        run: |
+          gh release upload \
+            "$TAG_NAME" \
+            "ctxmv-${TAG_NAME}.artifactbundle.zip" \
+            checksums-artifactbundle.txt
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

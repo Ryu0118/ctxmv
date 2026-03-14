@@ -1,0 +1,74 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'Package.resolved'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'Package.resolved'
+      - '.github/workflows/test.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            xcode-version: '26.2'
+            swift-version: '6.2'
+          - os: ubuntu-latest
+            swift-version: '6.2'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Select Xcode ${{ matrix.xcode-version }}
+        if: runner.os == 'macOS'
+        run: sudo xcode-select --switch /Applications/Xcode_${{ matrix.xcode-version }}.app/Contents/Developer
+
+      - name: Install Swift
+        if: runner.os == 'Linux'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: ${{ matrix.swift-version }}
+
+      - name: Install dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Verify Swift ${{ matrix.swift-version }}
+        if: runner.os == 'macOS'
+        run: xcrun swift --version | grep -E "Swift version ${{ matrix.swift-version }}([.]| )"
+
+      - name: Show Swift version
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            xcrun swift --version
+          else
+            swift --version
+          fi
+
+      - name: Run tests
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            xcrun swift test
+          else
+            swift test
+          fi
