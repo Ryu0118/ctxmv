@@ -13,8 +13,7 @@
       in
       {
         packages.default = pkgs.stdenv.mkDerivation {
-          pname = "ctxmv";
-          version = "0.0.0-dev";
+          name = "ctxmv";
 
           src = ./.;
 
