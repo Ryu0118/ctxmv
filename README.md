@@ -36,8 +36,6 @@ Or add to your `flake.nix`:
 inputs.ctxmv.url = "github:Ryu0118/ctxmv";
 ```
 
-> **Note:** Nix builds ctxmv from source and requires Swift. Build results are cached locally after the first run.
-
 ### Build from source
 
 Requires Swift 6.0+ and macOS 15+.
