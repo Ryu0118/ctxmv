@@ -85,26 +85,26 @@ struct CursorBlobTests {
 struct CursorDedupTests {
     @Test("conversation(fromDatabaseAt:) deduplicates identical messages from raw and protobuf blobs")
     func dedup() throws {
-        let sqlite = MockSQLiteProvider()
+        let sqlite = MockSQLiteReader()
 
         let rawJSON = #"{"role":"user","content":[{"type":"text","text":"Hello"}]}"#.data(using: .utf8)!
         var protobuf = Data([0x0A, 0x22, 0x33])
         protobuf.append(rawJSON)
+        let metadataJSON = #"{"agentId":"test","name":"Test","createdAt":1710000000000,"lastUsedModel":"gpt-4"}"#
 
         sqlite.blobResults = [
             (id: "blob1", data: rawJSON),
             (id: "blob2", data: protobuf),
         ]
+        sqlite.queryResults = [[
+            "key": "composerData",
+            "value": metadataJSON.utf8.map { String(format: "%02x", $0) }.joined(),
+        ]]
 
-        let provider = CursorProvider(fileSystem: MockFileManager(), sqlite: sqlite)
-        let metadata = CursorProvider.CursorSessionMetadata(
-            agentId: "test",
-            name: "Test",
-            createdAt: Date(),
-            lastUsedModel: "gpt-4"
-        )
+        let reader = CursorSessionReader(fileSystem: MockFileManager(), sqlite: sqlite)
+        let metadata = try #require(try reader.readMetadata(fromDatabaseAt: "/fake.db"))
 
-        let conversation = try provider.conversation(
+        let conversation = try reader.conversation(
             fromDatabaseAt: "/fake.db",
             metadata: metadata,
             limit: nil
@@ -213,8 +213,8 @@ struct CursorSessionTests {
             return dbPath
         }
 
-        func makeProvider(sqlite: MockSQLiteProvider = MockSQLiteProvider(), baseDir: URL? = nil) -> CursorProvider {
-            CursorProvider(
+        func makeReader(sqlite: MockSQLiteReader = MockSQLiteReader(), baseDir: URL? = nil) -> CursorSessionReader {
+            CursorSessionReader(
                 fileSystem: fileSystem,
                 sqlite: sqlite,
                 baseDir: baseDir
@@ -224,13 +224,13 @@ struct CursorSessionTests {
 
     @Test("listSessions returns empty when base dir missing")
     func listEmpty() async throws {
-        let provider = CursorProvider(
+        let reader = CursorSessionReader(
             fileSystem: MockFileManager(),
-            sqlite: MockSQLiteProvider(),
+            sqlite: MockSQLiteReader(),
             baseDir: URL(fileURLWithPath: "/nonexistent")
         )
 
-        #expect(try await provider.listSessions().isEmpty)
+        #expect(try await reader.listSessions().isEmpty)
     }
 
     @Test("loadSession falls back to agent-transcripts when store.db is unavailable")
@@ -238,7 +238,7 @@ struct CursorSessionTests {
         var fixture = Fixture()
         _ = fixture.configureLegacyTranscriptSession()
 
-        let conversation = try await fixture.makeProvider()
+        let conversation = try await fixture.makeReader()
             .loadSession(id: "87245085-1456-4f87-a575-4a85b759cd1d")
 
         #expect(conversation != nil)
@@ -256,7 +256,7 @@ struct CursorSessionTests {
         _ = fixture.configureNestedTranscriptSession()
         _ = fixture.configureUnreadableStoreDB()
 
-        let conversation = try await fixture.makeProvider()
+        let conversation = try await fixture.makeReader()
             .loadSession(id: fixture.sessionID)
 
         #expect(conversation != nil)
@@ -270,7 +270,7 @@ struct CursorSessionTests {
         var fixture = Fixture()
         _ = fixture.configureLegacyTranscriptSession()
 
-        let conversation = try await fixture.makeProvider()
+        let conversation = try await fixture.makeReader()
             .loadSession(id: "87245085-1456-4f87-a575-4a85b759cd1d", limit: 1)
 
         #expect(conversation != nil)
@@ -281,7 +281,7 @@ struct CursorSessionTests {
 
     @Test("loadSession limit uses recent blobs for store db")
     func loadFromRecentBlobs() async throws {
-        let sqlite = MockSQLiteProvider()
+        let sqlite = MockSQLiteReader()
         sqlite.queryResults = [[
             "key": "composerData",
             "value": "7b226167656e744964223a22637572736f722d73657373696f6e222c226e616d65223a2254657374222c22637265617465644174223a313731303030303030303030302c226c617374557365644d6f64656c223a226770742d34227d",
@@ -301,12 +301,12 @@ struct CursorSessionTests {
         let dbPath = "/mock/store.db"
         fileSystem.files[dbPath] = Data("db".utf8)
 
-        let provider = CursorProvider(
+        let reader = CursorSessionReader(
             fileSystem: fileSystem,
             sqlite: sqlite,
             baseDir: URL(fileURLWithPath: "/nonexistent")
         )
-        let conversation = try await provider.loadSession(id: "cursor-session", storagePath: dbPath, limit: 2)
+        let conversation = try await reader.loadSession(id: "cursor-session", storagePath: dbPath, limit: 2)
 
         #expect(sqlite.lastRecentBlobLimit == 800)
         #expect(conversation != nil)
@@ -321,7 +321,7 @@ struct CursorSessionTests {
         _ = fixture.configureNestedTranscriptSession()
         let dbPath = fixture.configureUnreadableStoreDB()
 
-        let sqlite = MockSQLiteProvider()
+        let sqlite = MockSQLiteReader()
         sqlite.queryResults = [[
             "key": "composerData",
             "value": "7b226167656e744964223a2263396630356437352d623935382d343263662d393332622d623038316138323239313734222c226e616d65223a2254657374222c22637265617465644174223a313731303030303030303030302c226c617374557365644d6f64656c223a226770742d34227d",
@@ -333,7 +333,7 @@ struct CursorSessionTests {
             ),
         ]
 
-        let conversation = try await fixture.makeProvider(sqlite: sqlite)
+        let conversation = try await fixture.makeReader(sqlite: sqlite)
             .loadSession(id: fixture.sessionID, storagePath: dbPath, limit: nil)
 
         #expect(conversation != nil)

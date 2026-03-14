@@ -5,7 +5,7 @@ import Testing
 @Suite("Verifies show-session lookup and auto-limit policy without real providers.")
 struct ShowRunnerTests {
     /// Spy provider that records how `ShowRunner` attempts to load sessions.
-    final class TrackingSessionProvider: SessionProvider, @unchecked Sendable {
+    final class TrackingSessionReader: SessionReader, @unchecked Sendable {
         let source: AgentSource
         var summaries: [SessionSummary]
         var conversation: UnifiedConversation
@@ -43,17 +43,17 @@ struct ShowRunnerTests {
             lastUserMessage: "Hello",
             byteSize: 2_000_000
         )
-        let provider = TrackingSessionProvider(
+        let reader = TrackingSessionReader(
             source: .claudeCode,
             summaries: [summary],
             conversation: TestFixtures.makeConversation(id: "session-large")
         )
 
-        let runner = ShowRunner(sessionID: "session-large", providers: [provider])
+        let runner = ShowRunner(sessionID: "session-large", readers: [reader])
         let conversation = try await runner.findSession()
 
         #expect(conversation != nil)
-        #expect(provider.lastLoadLimit == 100)
+        #expect(reader.lastLoadLimit == 100)
     }
 
     @Test("small sessions are loaded without truncation by default")
@@ -68,17 +68,17 @@ struct ShowRunnerTests {
             lastUserMessage: "Hello",
             byteSize: 128_000
         )
-        let provider = TrackingSessionProvider(
+        let reader = TrackingSessionReader(
             source: .codex,
             summaries: [summary],
             conversation: TestFixtures.makeConversation(id: "session-small", source: .codex)
         )
 
-        let runner = ShowRunner(sessionID: "session-small", providers: [provider])
+        let runner = ShowRunner(sessionID: "session-small", readers: [reader])
         let conversation = try await runner.findSession()
 
         #expect(conversation != nil)
-        #expect(provider.lastLoadLimit == nil)
+        #expect(reader.lastLoadLimit == nil)
     }
 
     @Test("explicit message limit overrides auto-limit policy")
@@ -94,7 +94,7 @@ struct ShowRunnerTests {
             byteSize: 128_000,
             storagePath: "/tmp/store.db"
         )
-        let provider = TrackingSessionProvider(
+        let reader = TrackingSessionReader(
             source: .cursor,
             summaries: [summary],
             conversation: TestFixtures.makeConversation(id: "session-explicit", source: .cursor)
@@ -103,13 +103,13 @@ struct ShowRunnerTests {
         let runner = ShowRunner(
             sessionID: "session-explicit",
             messageLimit: 5,
-            providers: [provider]
+            readers: [reader]
         )
         let conversation = try await runner.findSession()
 
         #expect(conversation != nil)
-        #expect(provider.lastLoadLimit == 5)
-        #expect(provider.lastLoadedStoragePath == "/tmp/store.db")
+        #expect(reader.lastLoadLimit == 5)
+        #expect(reader.lastLoadedStoragePath == "/tmp/store.db")
     }
 
     @Test("short id can resolve by listed suffix")
@@ -124,13 +124,13 @@ struct ShowRunnerTests {
             messageCount: 1,
             lastUserMessage: "hello"
         )
-        let provider = TrackingSessionProvider(
+        let reader = TrackingSessionReader(
             source: .claudeCode,
             summaries: [summary],
             conversation: TestFixtures.makeConversation(id: fullID, source: .claudeCode)
         )
 
-        let runner = ShowRunner(sessionID: "66667777", providers: [provider])
+        let runner = ShowRunner(sessionID: "66667777", readers: [reader])
         let conversation = try await runner.findSession()
 
         #expect(conversation?.id == fullID)

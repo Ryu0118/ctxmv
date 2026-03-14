@@ -9,7 +9,7 @@ package struct ListRunner: Sendable {
     private let excludeObserver: Bool
     private let limit: Int
 
-    private let providers: [SessionProvider]
+    private let readers: [SessionReader]
 
     package init(
         source: AgentSource? = nil,
@@ -17,28 +17,28 @@ package struct ListRunner: Sendable {
         excludeObserver: Bool = false,
         limit: Int = 20,
         fileSystem: FileSystemProtocol = DefaultFileSystem(),
-        sqlite: SQLiteProvider = DefaultSQLiteProvider()
+        sqlite: SQLiteReader = DefaultSQLiteReader()
     ) {
         self.source = source
         self.project = project
         self.excludeObserver = excludeObserver
         self.limit = limit
-        providers = SessionProviderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
+        readers = SessionReaderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
     }
 
-    /// Creates a runner with injected providers for tests.
+    /// Creates a runner with injected readers for tests.
     package init(
         source: AgentSource? = nil,
         project: String? = nil,
         excludeObserver: Bool = false,
         limit: Int = 20,
-        providers: [SessionProvider]
+        readers: [SessionReader]
     ) {
         self.source = source
         self.project = project
         self.excludeObserver = excludeObserver
         self.limit = limit
-        self.providers = providers
+        self.readers = readers
     }
 
     package func run() async throws {
@@ -52,12 +52,12 @@ package struct ListRunner: Sendable {
 
     /// Collects sessions from all active providers concurrently, then applies shared filters.
     private func fetchAndFilter() async throws -> [SessionSummary] {
-        logger.debug("Listing sessions from \(providers.count) providers")
+        logger.debug("Listing sessions from \(readers.count) readers")
 
         let sessions = await withTaskGroup(of: [SessionSummary].self, returning: [SessionSummary].self) { group in
-            for provider in activeProviders() {
+            for reader in activeReaders() {
                 group.addTask {
-                    (try? await provider.listSessions()) ?? []
+                    (try? await reader.listSessions()) ?? []
                 }
             }
             var all: [SessionSummary] = []
@@ -70,9 +70,9 @@ package struct ListRunner: Sendable {
         return finalize(filteredSessions(from: sessions))
     }
 
-    private func activeProviders() -> [SessionProvider] {
-        guard let source else { return providers }
-        return providers.filter { $0.source == source }
+    private func activeReaders() -> [SessionReader] {
+        guard let source else { return readers }
+        return readers.filter { $0.source == source }
     }
 
     private func filteredSessions(from sessions: [SessionSummary]) -> [SessionSummary] {

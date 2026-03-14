@@ -3,13 +3,13 @@ import Foundation
 import Testing
 
 /// Minimal helpers for unit-testing pure Claude provider parsing logic without real files.
-private enum ClaudeCodeProviderTestSupport {
-    static func makeStatelessProvider() -> ClaudeCodeProvider {
-        ClaudeCodeProvider(fileSystem: MockFileManager())
+private enum ClaudeCodeSessionReaderTestSupport {
+    static func makeStatelessReader() -> ClaudeCodeSessionReader {
+        ClaudeCodeSessionReader(fileSystem: MockFileManager())
     }
 
     static func decodeEntry(_ jsonl: String) -> ClaudeCodeEntry? {
-        makeStatelessProvider().decodeLine(jsonl)
+        makeStatelessReader().decodeLine(jsonl)
     }
 }
 
@@ -33,7 +33,7 @@ struct DecodeProjectPathTests {
 
     @Test("decodes encoded-cwd to file path", arguments: TestCase.allCases)
     func decode(_ testCase: TestCase) {
-        #expect(ClaudeCodeProvider.decodeProjectPath(testCase.input) == testCase.expected)
+        #expect(ClaudeCodeSessionReader.decodeProjectPath(testCase.input) == testCase.expected)
     }
 }
 
@@ -72,12 +72,12 @@ struct ClaudeCodeRoleTests {
 
     @Test("identifies message roles", arguments: TestCase.allCases)
     func extractRole(_ testCase: TestCase) {
-        let provider = ClaudeCodeProviderTestSupport.makeStatelessProvider()
-        guard let entry = ClaudeCodeProviderTestSupport.decodeEntry(testCase.jsonl) else {
+        let reader = ClaudeCodeSessionReaderTestSupport.makeStatelessReader()
+        guard let entry = ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
             #expect(testCase.expected == nil)
             return
         }
-        #expect(provider.extractRole(from: entry) == testCase.expected)
+        #expect(reader.extractRole(from: entry) == testCase.expected)
     }
 }
 
@@ -116,12 +116,12 @@ struct ClaudeCodeContentTests {
 
     @Test("extracts text content", arguments: TestCase.allCases)
     func extractContent(_ testCase: TestCase) {
-        let provider = ClaudeCodeProviderTestSupport.makeStatelessProvider()
-        guard let entry = ClaudeCodeProviderTestSupport.decodeEntry(testCase.jsonl) else {
+        let reader = ClaudeCodeSessionReaderTestSupport.makeStatelessReader()
+        guard let entry = ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
             #expect(testCase.expected == "")
             return
         }
-        #expect(provider.extractContent(from: entry) == testCase.expected)
+        #expect(reader.extractContent(from: entry) == testCase.expected)
     }
 }
 
@@ -144,12 +144,12 @@ struct ClaudeCodeSkipTests {
 
     @Test("filters non-message entry types", arguments: TestCase.allCases)
     func shouldSkip(_ testCase: TestCase) {
-        let provider = ClaudeCodeProviderTestSupport.makeStatelessProvider()
-        guard let entry = ClaudeCodeProviderTestSupport.decodeEntry(testCase.jsonl) else {
+        let reader = ClaudeCodeSessionReaderTestSupport.makeStatelessReader()
+        guard let entry = ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
             Issue.record("Failed to decode JSONL: \(testCase.jsonl)")
             return
         }
-        #expect(provider.shouldSkipEntry(entry) == testCase.expected)
+        #expect(reader.shouldSkipEntry(entry) == testCase.expected)
     }
 }
 
@@ -172,23 +172,23 @@ struct ClaudeCodeSessionTests {
             fileSystem.files[sessionFile.path] = Data(jsonl.utf8)
         }
 
-        func makeProvider() -> ClaudeCodeProvider {
-            ClaudeCodeProvider(fileSystem: fileSystem, baseDir: baseDir)
+        func makeReader() -> ClaudeCodeSessionReader {
+            ClaudeCodeSessionReader(fileSystem: fileSystem, baseDir: baseDir)
         }
     }
 
     @Test("listSessions returns empty when base dir missing")
     func listEmpty() async throws {
         let fileSystem = MockFileManager()
-        let provider = ClaudeCodeProvider(fileSystem: fileSystem, baseDir: URL(fileURLWithPath: "/nonexistent"))
-        #expect(try await provider.listSessions().isEmpty)
+        let reader = ClaudeCodeSessionReader(fileSystem: fileSystem, baseDir: URL(fileURLWithPath: "/nonexistent"))
+        #expect(try await reader.listSessions().isEmpty)
     }
 
     @Test("listSessions finds sessions in project directories")
     func listFinds() async throws {
         var fixture = Fixture()
         fixture.configureSession()
-        let sessions = try await fixture.makeProvider().listSessions()
+        let sessions = try await fixture.makeReader().listSessions()
 
         #expect(sessions.count == 1)
         #expect(sessions[0].id == fixture.sessionID)
@@ -200,14 +200,14 @@ struct ClaudeCodeSessionTests {
     @Test("loadSession returns nil for unknown ID")
     func loadNotFound() async throws {
         let fixture = Fixture()
-        #expect(try await fixture.makeProvider().loadSession(id: "nope") == nil)
+        #expect(try await fixture.makeReader().loadSession(id: "nope") == nil)
     }
 
     @Test("loadSession parses user and assistant messages, skips progress/snapshot")
     func loadParsesMessages() async throws {
         var fixture = Fixture()
         fixture.configureSession()
-        let conversation = try await fixture.makeProvider().loadSession(id: fixture.sessionID)
+        let conversation = try await fixture.makeReader().loadSession(id: fixture.sessionID)
 
         #expect(conversation != nil)
         let messages = conversation!.messages
@@ -222,7 +222,7 @@ struct ClaudeCodeSessionTests {
     func loadParsesMessagesWithLimit() async throws {
         var fixture = Fixture()
         fixture.configureSession()
-        let conversation = try await fixture.makeProvider().loadSession(id: fixture.sessionID, limit: 2)
+        let conversation = try await fixture.makeReader().loadSession(id: fixture.sessionID, limit: 2)
 
         #expect(conversation != nil)
         let messages = conversation!.messages

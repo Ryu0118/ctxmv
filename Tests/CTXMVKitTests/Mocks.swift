@@ -57,7 +57,7 @@ final class MockFileManager: FileSystemProtocol, @unchecked Sendable {
 }
 
 /// In-memory SQLite stub that lets tests control full and recent blob queries independently.
-final class MockSQLiteProvider: SQLiteProvider, @unchecked Sendable {
+final class MockSQLiteReader: SQLiteReader, @unchecked Sendable {
     var queryResults: [[String: Any]] = []
     var blobResults: [(id: String, data: Data)] = []
     var recentBlobResults: [(id: String, data: Data)]?

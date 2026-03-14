@@ -7,28 +7,28 @@ package struct MigrateRunner: Sendable {
     private let sessionID: String
     private let target: AgentSource
 
-    private let providers: [SessionProvider]
+    private let readers: [SessionReader]
 
     package init(
         sessionID: String,
         target: AgentSource,
         fileSystem: FileSystemProtocol = DefaultFileSystem(),
-        sqlite: SQLiteProvider = DefaultSQLiteProvider()
+        sqlite: SQLiteReader = DefaultSQLiteReader()
     ) {
         self.sessionID = sessionID
         self.target = target
-        providers = SessionProviderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
+        readers = SessionReaderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
     }
 
-    /// Creates a runner with injected providers for tests.
+    /// Creates a runner with injected readers for tests.
     package init(
         sessionID: String,
         target: AgentSource,
-        providers: [SessionProvider]
+        readers: [SessionReader]
     ) {
         self.sessionID = sessionID
         self.target = target
-        self.providers = providers
+        self.readers = readers
     }
 
     package func run() async throws {
@@ -36,7 +36,7 @@ package struct MigrateRunner: Sendable {
             sessionID: sessionID,
             messageLimit: nil,
             largeSessionByteThreshold: nil,
-            providers: providers
+            readers: readers
         )
         guard let conversation = try await showRunner.findSession() else {
             logger.error("Session '\(sessionID)' not found.")

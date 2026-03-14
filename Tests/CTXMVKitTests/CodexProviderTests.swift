@@ -3,13 +3,13 @@ import Foundation
 import Testing
 
 /// Minimal helpers for unit-testing Codex parsing logic without a full rollout directory.
-private enum CodexProviderTestSupport {
-    static func makeStatelessProvider() -> CodexProvider {
-        CodexProvider(fileSystem: MockFileManager())
+private enum CodexSessionReaderTestSupport {
+    static func makeStatelessReader() -> CodexSessionReader {
+        CodexSessionReader(fileSystem: MockFileManager())
     }
 
     static func decodeEntry(_ jsonl: String) -> CodexEntry? {
-        makeStatelessProvider().decodeLine(jsonl)
+        makeStatelessReader().decodeLine(jsonl)
     }
 }
 
@@ -58,12 +58,12 @@ struct CodexRoleTests {
 
     @Test("identifies Codex message roles", arguments: TestCase.allCases)
     func extractRole(_ testCase: TestCase) {
-        let provider = CodexProviderTestSupport.makeStatelessProvider()
-        guard let entry = CodexProviderTestSupport.decodeEntry(testCase.jsonl) else {
+        let reader = CodexSessionReaderTestSupport.makeStatelessReader()
+        guard let entry = CodexSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
             Issue.record("Failed to decode JSONL: \(testCase.jsonl)")
             return
         }
-        #expect(provider.extractRole(from: entry) == testCase.expected)
+        #expect(reader.extractRole(from: entry) == testCase.expected)
     }
 }
 
@@ -102,12 +102,12 @@ struct CodexContentTests {
 
     @Test("extracts Codex message content", arguments: TestCase.allCases)
     func extractContent(_ testCase: TestCase) {
-        let provider = CodexProviderTestSupport.makeStatelessProvider()
-        guard let entry = CodexProviderTestSupport.decodeEntry(testCase.jsonl) else {
+        let reader = CodexSessionReaderTestSupport.makeStatelessReader()
+        guard let entry = CodexSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
             Issue.record("Failed to decode JSONL: \(testCase.jsonl)")
             return
         }
-        #expect(provider.extractContent(from: entry) == testCase.expected)
+        #expect(reader.extractContent(from: entry) == testCase.expected)
     }
 }
 
@@ -126,8 +126,8 @@ struct CodexRolloutTests {
         fileSystem.files[notRollout.path] = Data()
         fileSystem.files[notJsonl.path] = Data()
 
-        let provider = CodexProvider(fileSystem: fileSystem, baseDir: base)
-        let found = try provider.findRolloutFiles(in: base)
+        let reader = CodexSessionReader(fileSystem: fileSystem, baseDir: base)
+        let found = try reader.findRolloutFiles(in: base)
 
         #expect(found.count == 1)
         #expect(found[0].lastPathComponent == "rollout-1.jsonl")
@@ -160,23 +160,23 @@ struct CodexSessionTests {
             return rollout
         }
 
-        func makeProvider() -> CodexProvider {
-            CodexProvider(fileSystem: fileSystem, baseDir: baseDir)
+        func makeReader() -> CodexSessionReader {
+            CodexSessionReader(fileSystem: fileSystem, baseDir: baseDir)
         }
     }
 
     @Test("listSessions returns empty when base dir missing")
     func listEmpty() async throws {
         let fileSystem = MockFileManager()
-        let provider = CodexProvider(fileSystem: fileSystem, baseDir: URL(fileURLWithPath: "/nonexistent"))
-        #expect(try await provider.listSessions().isEmpty)
+        let reader = CodexSessionReader(fileSystem: fileSystem, baseDir: URL(fileURLWithPath: "/nonexistent"))
+        #expect(try await reader.listSessions().isEmpty)
     }
 
     @Test("listSessions finds rollout files and extracts metadata")
     func listFinds() async throws {
         var fixture = Fixture()
         _ = fixture.configureRollout(named: "rollout-abc.jsonl")
-        let sessions = try await fixture.makeProvider().listSessions()
+        let sessions = try await fixture.makeReader().listSessions()
 
         #expect(sessions.count == 1)
         #expect(sessions[0].id == "codex-session-1")
@@ -191,7 +191,7 @@ struct CodexSessionTests {
             named: "rollout-noise.jsonl",
             jsonl: TestFixtures.codexJSONLWithNoiseFirst()
         )
-        let sessions = try await fixture.makeProvider().listSessions()
+        let sessions = try await fixture.makeReader().listSessions()
 
         #expect(sessions.count == 1)
         #expect(sessions[0].lastUserMessage == "Fix the bug")
@@ -201,7 +201,7 @@ struct CodexSessionTests {
     func loadParses() async throws {
         var fixture = Fixture()
         _ = fixture.configureRollout(named: "rollout-abc.jsonl")
-        let conversation = try await fixture.makeProvider().loadSession(id: "codex-session-1")
+        let conversation = try await fixture.makeReader().loadSession(id: "codex-session-1")
 
         #expect(conversation != nil)
         let msgs = conversation!.messages
@@ -220,7 +220,7 @@ struct CodexSessionTests {
     func loadParsesWithLimit() async throws {
         var fixture = Fixture()
         _ = fixture.configureRollout(named: "rollout-abc.jsonl")
-        let conversation = try await fixture.makeProvider().loadSession(id: "codex-session-1", limit: 2)
+        let conversation = try await fixture.makeReader().loadSession(id: "codex-session-1", limit: 2)
 
         #expect(conversation != nil)
         let msgs = conversation!.messages
@@ -246,8 +246,8 @@ struct CodexSessionTests {
             sessionId: "4248e42d-6278-4e38-913b-f7a3ae075812"
         ).data(using: .utf8)!
 
-        let provider = CodexProvider(fileSystem: fileSystem, baseDir: base)
-        let conversation = try await provider.loadSession(
+        let reader = CodexSessionReader(fileSystem: fileSystem, baseDir: base)
+        let conversation = try await reader.loadSession(
             id: "4248e42d-6278-4e38-913b-f7a3ae075812"
         )
 
@@ -259,6 +259,6 @@ struct CodexSessionTests {
     @Test("loadSession returns nil for unknown ID")
     func loadNotFound() async throws {
         let fixture = Fixture()
-        #expect(try await fixture.makeProvider().loadSession(id: "nope") == nil)
+        #expect(try await fixture.makeReader().loadSession(id: "nope") == nil)
     }
 }

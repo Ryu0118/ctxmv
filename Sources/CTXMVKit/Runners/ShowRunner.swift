@@ -22,7 +22,7 @@ package struct ShowRunner: Sendable {
     private let autoLargeSessionMessageLimit: Int
     private let formatter: ShowConversationFormatter
 
-    private let providers: [SessionProvider]
+    private let readers: [SessionReader]
 
     package init(
         sessionID: String,
@@ -32,7 +32,7 @@ package struct ShowRunner: Sendable {
         largeSessionByteThreshold: Int64? = Defaults.largeSessionByteThreshold,
         autoLargeSessionMessageLimit: Int = Defaults.autoLargeSessionMessageLimit,
         fileSystem: FileSystemProtocol = DefaultFileSystem(),
-        sqlite: SQLiteProvider = DefaultSQLiteProvider()
+        sqlite: SQLiteReader = DefaultSQLiteReader()
     ) {
         self.sessionID = sessionID
         self.source = source
@@ -40,10 +40,10 @@ package struct ShowRunner: Sendable {
         self.largeSessionByteThreshold = largeSessionByteThreshold
         self.autoLargeSessionMessageLimit = autoLargeSessionMessageLimit
         formatter = ShowConversationFormatter(raw: raw)
-        providers = SessionProviderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
+        readers = SessionReaderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
     }
 
-    /// Creates a runner with injected providers for tests.
+    /// Creates a runner with injected readers for tests.
     package init(
         sessionID: String,
         source: AgentSource? = nil,
@@ -51,7 +51,7 @@ package struct ShowRunner: Sendable {
         messageLimit: Int? = nil,
         largeSessionByteThreshold: Int64? = Defaults.largeSessionByteThreshold,
         autoLargeSessionMessageLimit: Int = Defaults.autoLargeSessionMessageLimit,
-        providers: [SessionProvider]
+        readers: [SessionReader]
     ) {
         self.sessionID = sessionID
         self.source = source
@@ -59,7 +59,7 @@ package struct ShowRunner: Sendable {
         self.largeSessionByteThreshold = largeSessionByteThreshold
         self.autoLargeSessionMessageLimit = autoLargeSessionMessageLimit
         formatter = ShowConversationFormatter(raw: raw)
-        self.providers = providers
+        self.readers = readers
     }
 
     package func run() async throws {
@@ -83,29 +83,29 @@ package struct ShowRunner: Sendable {
     private func findLocatedSession() async throws -> LocatedSession? {
         logger.debug("Finding session", metadata: ["id": "\(sessionID)"])
 
-        let candidateProviders = filteredProviders()
+        let candidateReaders = filteredReaders()
 
-        let summaries = try await listSessions(from: candidateProviders)
+        let summaries = try await listSessions(from: candidateReaders)
         if let summary = matchingSummary(in: summaries) {
-            return try await loadLocatedSession(from: summary, using: candidateProviders)
+            return try await loadLocatedSession(from: summary, using: candidateReaders)
         }
 
-        return try await loadFallbackSession(using: candidateProviders)
+        return try await loadFallbackSession(using: candidateReaders)
     }
 
-    private func listSessions(from candidateProviders: [SessionProvider]) async throws -> [SessionSummary] {
+    private func listSessions(from candidateReaders: [SessionReader]) async throws -> [SessionSummary] {
         var all: [SessionSummary] = []
-        for provider in candidateProviders {
-            if let sessions = try? await provider.listSessions() {
+        for reader in candidateReaders {
+            if let sessions = try? await reader.listSessions() {
                 all.append(contentsOf: sessions)
             }
         }
         return all.sorted { $0.createdAt > $1.createdAt }
     }
 
-    private func filteredProviders() -> [SessionProvider] {
-        guard let source else { return providers }
-        return providers.filter { $0.source == source }
+    private func filteredReaders() -> [SessionReader] {
+        guard let source else { return readers }
+        return readers.filter { $0.source == source }
     }
 
     /// Supports exact IDs plus the short suffix shown by `ctxmv list`.
@@ -126,11 +126,11 @@ package struct ShowRunner: Sendable {
 
     private func loadLocatedSession(
         from summary: SessionSummary,
-        using candidateProviders: [SessionProvider]
+        using candidateReaders: [SessionReader]
     ) async throws -> LocatedSession? {
         let appliedLimit = resolvedMessageLimit(for: summary.byteSize)
-        guard let provider = candidateProviders.first(where: { $0.source == summary.source }),
-              let conversation = try? await provider.loadSession(
+        guard let reader = candidateReaders.first(where: { $0.source == summary.source }),
+              let conversation = try? await reader.loadSession(
                   id: summary.id,
                   storagePath: summary.storagePath,
                   limit: appliedLimit
@@ -147,10 +147,10 @@ package struct ShowRunner: Sendable {
         )
     }
 
-    private func loadFallbackSession(using candidateProviders: [SessionProvider]) async throws -> LocatedSession? {
+    private func loadFallbackSession(using candidateReaders: [SessionReader]) async throws -> LocatedSession? {
         let fallbackLimit = resolvedMessageLimit(for: nil)
-        for provider in candidateProviders {
-            if let conversation = try? await provider.loadSession(id: sessionID, limit: fallbackLimit) {
+        for reader in candidateReaders {
+            if let conversation = try? await reader.loadSession(id: sessionID, limit: fallbackLimit) {
                 logger.info("🔍 Found session via exact fallback source=\(conversation.source.rawValue)")
                 return makeLocatedSession(
                     conversation: conversation,
