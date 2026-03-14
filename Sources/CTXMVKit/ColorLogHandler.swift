@@ -60,6 +60,7 @@ package struct ColorLogHandler: LogHandler, Sendable {
     private func writeLine(_ message: String) {
         guard let data = "\(message)\n".data(using: .utf8) else { return }
         standardOutput.write(data)
+        fflush(stdout)
     }
 }
 
