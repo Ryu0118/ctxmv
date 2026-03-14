@@ -20,8 +20,7 @@ Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent
 curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | bash
 ```
 
-<details>
-<summary>Other installation methods</summary>
+### Other methods
 
 #### [Nest](https://github.com/mtj0928/nest)
 
@@ -44,8 +43,6 @@ git clone https://github.com/Ryu0118/ctxmv.git
 cd ctxmv
 swift run ctxmv <subcommand>
 ```
-
-</details>
 
 ## Usage
 
