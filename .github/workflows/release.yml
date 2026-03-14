@@ -61,7 +61,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
 
       - name: Build Linux Binary
-        run: swift build -c release
+        run: swift build -c release --static-swift-stdlib
 
       - name: Create Archive
         run: |
