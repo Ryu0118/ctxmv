@@ -16,19 +16,26 @@ Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent
 
 ## Install
 
-### Nest ([mtj0928/nest](https://github.com/mtj0928/nest))
+```bash
+curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | bash
+```
+
+<details>
+<summary>Other installation methods</summary>
+
+#### [Nest](https://github.com/mtj0928/nest)
 
 ```bash
 nest install Ryu0118/ctxmv
 ```
 
-### Mise ([jdx/mise](https://github.com/jdx/mise))
+#### [Mise](https://github.com/jdx/mise)
 
 ```bash
 mise use -g ubi:Ryu0118/ctxmv
 ```
 
-### Build from source
+#### Build from source
 
 Requires Swift 6.0+ and macOS 15+.
 
@@ -37,6 +44,8 @@ git clone https://github.com/Ryu0118/ctxmv.git
 cd ctxmv
 swift run ctxmv <subcommand>
 ```
+
+</details>
 
 ## Usage
 
