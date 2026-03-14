@@ -26,10 +26,10 @@ To update, run the same command. It skips the download if already up-to-date.
 
 ```bash
 # Install a specific version
-VERSION=0.1.0 curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | VERSION=0.1.0 bash
 
 # Force reinstall
-FORCE=1 curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | FORCE=1 bash
 ```
 
 ### Other methods
