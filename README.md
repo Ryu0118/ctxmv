@@ -27,13 +27,7 @@ mise use -g ubi:Ryu0118/ctxmv
 ### Nix ([NixOS/nix](https://github.com/NixOS/nix))
 
 ```bash
-nix run github:Ryu0118/ctxmv
-```
-
-Or add to your `flake.nix`:
-
-```nix
-inputs.ctxmv.url = "github:Ryu0118/ctxmv";
+nix profile install github:Ryu0118/ctxmv
 ```
 
 ### Build from source
