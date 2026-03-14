@@ -4,6 +4,10 @@ A CLI tool to migrate conversation sessions between AI coding agents.
 
 Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent`, not the GUI app).
 
+| Claude Code | Codex | Cursor |
+|:-:|:-:|:-:|
+| ![Claude Code](assets/demo-claude-code.png) | ![Codex](assets/demo-codex.png) | ![Cursor](assets/demo-cursor.png) |
+
 ## Features
 
 - 🔀 Migrate sessions between any pair of agents in native format (resume-compatible)
