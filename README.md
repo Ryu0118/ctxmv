@@ -22,13 +22,13 @@ curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | bas
 
 ### Other methods
 
-#### [Nest](https://github.com/mtj0928/nest)
+#### Nest ([mtj0928/nest](https://github.com/mtj0928/nest))
 
 ```bash
 nest install Ryu0118/ctxmv
 ```
 
-#### [Mise](https://github.com/jdx/mise)
+#### Mise ([jdx/mise](https://github.com/jdx/mise))
 
 ```bash
 mise use -g ubi:Ryu0118/ctxmv
