@@ -107,7 +107,8 @@ main() {
   current="$(installed_version)"
 
   if [ -n "$current" ] && [ "$current" = "$clean_version" ] && [ -z "$FORCE" ]; then
-    info "$BIN_NAME $clean_version is already installed. Use FORCE=1 to reinstall."
+    info "$BIN_NAME $clean_version is already installed. To force reinstall:"
+    info "  curl -fsSL https://raw.githubusercontent.com/Ryu0118/ctxmv/main/install.sh | FORCE=1 bash"
     exit 0
   fi
 
