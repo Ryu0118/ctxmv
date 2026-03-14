@@ -92,7 +92,7 @@ enum MigrationDeduplicator {
         originMessageCount: Int,
         originDigest: String,
         in directory: URL,
-        fileSystem: FileSystemProtocol,
+        fileSystem: any FileSystemProtocol,
         allowBareMetaLine: Bool = true
     ) -> String? {
         guard fileSystem.fileExists(atPath: directory.path) else { return nil }
@@ -138,7 +138,7 @@ enum MigrationDeduplicator {
         originMessageCount: Int,
         originDigest: String,
         in baseDirectory: URL,
-        fileSystem: FileSystemProtocol,
+        fileSystem: any FileSystemProtocol,
         allowBareMetaLine: Bool = true
     ) -> String? {
         guard fileSystem.fileExists(atPath: baseDirectory.path) else { return nil }
@@ -182,7 +182,7 @@ enum MigrationDeduplicator {
 
     private static func readMigrationMeta(
         from file: URL,
-        fileSystem: FileSystemProtocol,
+        fileSystem: any FileSystemProtocol,
         allowBareMetaLine: Bool
     ) -> MigrationMeta? {
         guard let data = fileSystem.contents(atPath: file.path),
@@ -211,7 +211,7 @@ enum MigrationDeduplicator {
     private static func nestedDirectories(
         in directory: URL,
         depth: Int,
-        fileSystem: FileSystemProtocol
+        fileSystem: any FileSystemProtocol
     ) -> [URL] {
         guard depth > 0 else { return [directory] }
 
@@ -227,7 +227,7 @@ enum MigrationDeduplicator {
 
     private static func childDirectories(
         in directory: URL,
-        fileSystem: FileSystemProtocol
+        fileSystem: any FileSystemProtocol
     ) -> [URL] {
         ((try? fileSystem.contentsOfDirectory(
             at: directory,
@@ -239,7 +239,7 @@ enum MigrationDeduplicator {
 
     private static func isDirectory(
         _ url: URL,
-        fileSystem: FileSystemProtocol
+        fileSystem: any FileSystemProtocol
     ) -> Bool {
         var isDirectory = ObjCBool(false)
         guard fileSystem.fileExists(atPath: url.path, isDirectory: &isDirectory) else { return false }

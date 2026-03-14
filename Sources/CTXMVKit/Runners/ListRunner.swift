@@ -9,15 +9,15 @@ package struct ListRunner: Sendable {
     private let excludeObserver: Bool
     private let limit: Int
 
-    private let readers: [SessionReader]
+    private let readers: [any SessionReader]
 
     package init(
         source: AgentSource? = nil,
         project: String? = nil,
         excludeObserver: Bool = false,
         limit: Int = 20,
-        fileSystem: FileSystemProtocol = DefaultFileSystem(),
-        sqlite: SQLiteReader = DefaultSQLiteReader()
+        fileSystem: any FileSystemProtocol = DefaultFileSystem(),
+        sqlite: any SQLiteReader = DefaultSQLiteReader()
     ) {
         self.source = source
         self.project = project
@@ -32,7 +32,7 @@ package struct ListRunner: Sendable {
         project: String? = nil,
         excludeObserver: Bool = false,
         limit: Int = 20,
-        readers: [SessionReader]
+        readers: [any SessionReader]
     ) {
         self.source = source
         self.project = project
@@ -70,7 +70,7 @@ package struct ListRunner: Sendable {
         return finalize(filteredSessions(from: sessions))
     }
 
-    private func activeReaders() -> [SessionReader] {
+    private func activeReaders() -> [any SessionReader] {
         guard let source else { return readers }
         return readers.filter { $0.source == source }
     }

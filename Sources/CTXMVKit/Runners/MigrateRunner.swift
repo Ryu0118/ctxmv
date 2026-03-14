@@ -7,13 +7,13 @@ package struct MigrateRunner: Sendable {
     private let sessionID: String
     private let target: AgentSource
 
-    private let readers: [SessionReader]
+    private let readers: [any SessionReader]
 
     package init(
         sessionID: String,
         target: AgentSource,
-        fileSystem: FileSystemProtocol = DefaultFileSystem(),
-        sqlite: SQLiteReader = DefaultSQLiteReader()
+        fileSystem: any FileSystemProtocol = DefaultFileSystem(),
+        sqlite: any SQLiteReader = DefaultSQLiteReader()
     ) {
         self.sessionID = sessionID
         self.target = target
@@ -24,7 +24,7 @@ package struct MigrateRunner: Sendable {
     package init(
         sessionID: String,
         target: AgentSource,
-        readers: [SessionReader]
+        readers: [any SessionReader]
     ) {
         self.sessionID = sessionID
         self.target = target
@@ -69,7 +69,7 @@ package struct MigrateRunner: Sendable {
     }
 
     /// Selects the migrator matching the requested target agent.
-    private func buildMigrator() -> SessionMigrator {
+    private func buildMigrator() -> any SessionMigrator {
         switch target {
         case .claudeCode: ClaudeCodeMigrator()
         case .codex: CodexMigrator()

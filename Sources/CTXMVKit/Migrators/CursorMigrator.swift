@@ -10,7 +10,7 @@ struct CursorMigrator: SessionMigrator, Sendable {
         static let targetFormatVersion = 2
     }
 
-    private let fileSystem: FileSystemProtocol
+    private let fileSystem: any FileSystemProtocol
     private let pathResolver: CursorMigrationPathResolver
     private let blobBuilder = CursorConversationBlobBuilder()
     private let databaseWriter = CursorStoreDatabaseWriter()
@@ -18,7 +18,7 @@ struct CursorMigrator: SessionMigrator, Sendable {
     private let transcriptWriter: CursorTranscriptWriter
 
     init(
-        fileSystem: FileSystemProtocol = DefaultFileSystem(),
+        fileSystem: any FileSystemProtocol = DefaultFileSystem(),
         projectPath: String? = nil
     ) {
         self.fileSystem = fileSystem

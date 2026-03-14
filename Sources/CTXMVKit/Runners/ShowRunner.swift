@@ -22,7 +22,7 @@ package struct ShowRunner: Sendable {
     private let autoLargeSessionMessageLimit: Int
     private let formatter: ShowConversationFormatter
 
-    private let readers: [SessionReader]
+    private let readers: [any SessionReader]
 
     package init(
         sessionID: String,
@@ -31,8 +31,8 @@ package struct ShowRunner: Sendable {
         messageLimit: Int? = nil,
         largeSessionByteThreshold: Int64? = Defaults.largeSessionByteThreshold,
         autoLargeSessionMessageLimit: Int = Defaults.autoLargeSessionMessageLimit,
-        fileSystem: FileSystemProtocol = DefaultFileSystem(),
-        sqlite: SQLiteReader = DefaultSQLiteReader()
+        fileSystem: any FileSystemProtocol = DefaultFileSystem(),
+        sqlite: any SQLiteReader = DefaultSQLiteReader()
     ) {
         self.sessionID = sessionID
         self.source = source
@@ -51,7 +51,7 @@ package struct ShowRunner: Sendable {
         messageLimit: Int? = nil,
         largeSessionByteThreshold: Int64? = Defaults.largeSessionByteThreshold,
         autoLargeSessionMessageLimit: Int = Defaults.autoLargeSessionMessageLimit,
-        readers: [SessionReader]
+        readers: [any SessionReader]
     ) {
         self.sessionID = sessionID
         self.source = source
@@ -93,7 +93,7 @@ package struct ShowRunner: Sendable {
         return try await loadFallbackSession(using: candidateReaders)
     }
 
-    private func listSessions(from candidateReaders: [SessionReader]) async throws -> [SessionSummary] {
+    private func listSessions(from candidateReaders: [any SessionReader]) async throws -> [SessionSummary] {
         var all: [SessionSummary] = []
         for reader in candidateReaders {
             if let sessions = try? await reader.listSessions() {
@@ -103,7 +103,7 @@ package struct ShowRunner: Sendable {
         return all.sorted { $0.createdAt > $1.createdAt }
     }
 
-    private func filteredReaders() -> [SessionReader] {
+    private func filteredReaders() -> [any SessionReader] {
         guard let source else { return readers }
         return readers.filter { $0.source == source }
     }
@@ -126,7 +126,7 @@ package struct ShowRunner: Sendable {
 
     private func loadLocatedSession(
         from summary: SessionSummary,
-        using candidateReaders: [SessionReader]
+        using candidateReaders: [any SessionReader]
     ) async throws -> LocatedSession? {
         let appliedLimit = resolvedMessageLimit(for: summary.byteSize)
         guard let reader = candidateReaders.first(where: { $0.source == summary.source }),
@@ -147,7 +147,7 @@ package struct ShowRunner: Sendable {
         )
     }
 
-    private func loadFallbackSession(using candidateReaders: [SessionReader]) async throws -> LocatedSession? {
+    private func loadFallbackSession(using candidateReaders: [any SessionReader]) async throws -> LocatedSession? {
         let fallbackLimit = resolvedMessageLimit(for: nil)
         for reader in candidateReaders {
             if let conversation = try? await reader.loadSession(id: sessionID, limit: fallbackLimit) {

@@ -4,7 +4,7 @@ import Foundation
 struct CodexMigrator: SessionMigrator, Sendable {
     let target: AgentSource = .codex
 
-    private let fileSystem: FileSystemProtocol
+    private let fileSystem: any FileSystemProtocol
     private let jsonlBuilder: CodexSessionJSONLBuilder
 
     private enum StorageDefaults {
@@ -46,7 +46,7 @@ struct CodexMigrator: SessionMigrator, Sendable {
     }
 
     init(
-        fileSystem: FileSystemProtocol = DefaultFileSystem(),
+        fileSystem: any FileSystemProtocol = DefaultFileSystem(),
         jsonlBuilder: CodexSessionJSONLBuilder = CodexSessionJSONLBuilder()
     ) {
         self.fileSystem = fileSystem

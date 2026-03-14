@@ -3,10 +3,10 @@ import Foundation
 
 /// Finds prior Cursor migrations for strict deduplication.
 struct CursorMigrationScanner: Sendable {
-    private let fileSystem: FileSystemProtocol
+    private let fileSystem: any FileSystemProtocol
     private let targetFormatVersion: Int
 
-    init(fileSystem: FileSystemProtocol, targetFormatVersion: Int) {
+    init(fileSystem: any FileSystemProtocol, targetFormatVersion: Int) {
         self.fileSystem = fileSystem
         self.targetFormatVersion = targetFormatVersion
     }

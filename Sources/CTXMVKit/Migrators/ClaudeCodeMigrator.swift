@@ -4,11 +4,11 @@ import Foundation
 struct ClaudeCodeMigrator: SessionMigrator, Sendable {
     let target: AgentSource = .claudeCode
 
-    private let fileSystem: FileSystemProtocol
+    private let fileSystem: any FileSystemProtocol
     private let projectPath: String?
 
     init(
-        fileSystem: FileSystemProtocol = DefaultFileSystem(),
+        fileSystem: any FileSystemProtocol = DefaultFileSystem(),
         projectPath: String? = nil
     ) {
         self.fileSystem = fileSystem
