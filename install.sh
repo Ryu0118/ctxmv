@@ -39,7 +39,8 @@ fetch_latest_tag() {
 }
 
 main() {
-  local platform tag archive_url tmp
+  local platform tag archive_url
+  local tmp=""
 
   platform="$(detect_platform)"
   tag="$(fetch_latest_tag)"

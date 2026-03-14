@@ -29,7 +29,7 @@ jobs:
           TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Upload Artifact Bundle Input
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ctxmv-macos-binary
           path: .build/apple/Products/Release/ctxmv
@@ -71,7 +71,7 @@ jobs:
           TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Upload Artifact Bundle Input
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ctxmv-linux-binary
           path: .build/release/ctxmv
@@ -96,13 +96,13 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Download macOS binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ctxmv-macos-binary
           path: /tmp/ctxmv-artifacts/macos
 
       - name: Download Linux binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ctxmv-linux-binary
           path: /tmp/ctxmv-artifacts/linux
@@ -117,6 +117,7 @@ jobs:
 
           cp /tmp/ctxmv-artifacts/macos/ctxmv "$BUNDLE_NAME/ctxmv-macos/bin/ctxmv"
           cp /tmp/ctxmv-artifacts/linux/ctxmv "$BUNDLE_NAME/ctxmv-linux/bin/ctxmv"
+          chmod +x "$BUNDLE_NAME/ctxmv-macos/bin/ctxmv" "$BUNDLE_NAME/ctxmv-linux/bin/ctxmv"
 
           cat > "$BUNDLE_NAME/info.json" <<EOF
           {
