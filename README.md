@@ -26,6 +26,20 @@ mise use -g ubi:Ryu0118/ctxmv
 
 `nest install Ryu0118/ctxmv` uses the release artifact bundle automatically, while the `ubi:` backend in mise installs from the platform-specific GitHub release archives.
 
+### Nix
+
+```bash
+nix run github:Ryu0118/ctxmv
+```
+
+Or add to your `flake.nix`:
+
+```nix
+inputs.ctxmv.url = "github:Ryu0118/ctxmv";
+```
+
+> **Note:** Nix builds ctxmv from source and requires Swift. Build results are cached locally after the first run.
+
 ### Build from source
 
 Requires Swift 6.0+ and macOS 15+.
