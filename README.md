@@ -28,12 +28,6 @@ nest install Ryu0118/ctxmv
 mise use -g ubi:Ryu0118/ctxmv
 ```
 
-### Nix ([NixOS/nix](https://github.com/NixOS/nix))
-
-```bash
-nix profile install github:Ryu0118/ctxmv
-```
-
 ### Build from source
 
 Requires Swift 6.0+ and macOS 15+.
