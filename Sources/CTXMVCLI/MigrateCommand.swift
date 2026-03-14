@@ -1,7 +1,7 @@
 import ArgumentParser
 import CTXMVKit
 
-/// Migrates a session into another agent's native storage format.
+/// Migrates a session into another agent's storage format.
 struct MigrateCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "migrate",

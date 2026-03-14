@@ -5,15 +5,15 @@ enum MigrationResult: Sendable {
     case written(path: String, sessionID: String)
 }
 
-/// Migrates a unified conversation into one target agent's native storage format.
+/// Migrates a unified conversation into a target agent's storage format.
 protocol SessionMigrator: Sendable {
     var target: AgentSource { get }
 
-    /// Writes native session files and returns the path written.
+    /// Writes session files and returns the path written.
     func migrate(_ conversation: UnifiedConversation) throws -> MigrationResult
 }
 
-/// Describes failures that can occur during native-session migration.
+/// Describes failures that can occur during session migration.
 enum MigrationError: Error, CustomStringConvertible {
     case sessionEmpty
     case writeFailed(String)

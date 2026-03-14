@@ -2,8 +2,8 @@
 import Foundation
 import Testing
 
-@Suite("Verifies Codex-native migration output as structured entries and rollout files.")
-struct CodexNativeMigratorTests {
+@Suite("Verifies Codex migration output as structured entries and rollout files.")
+struct CodexMigratorTests {
     @Test("makeDocument emits migration meta, session meta, and paired assistant entries")
     func makeDocumentBuildsStructuredDocument() throws {
         let builder = CodexSessionJSONLBuilder(workingDirectoryProvider: { "/fallback/cwd" })
@@ -99,7 +99,7 @@ struct CodexNativeMigratorTests {
     @Test("migrate writes rollout JSONL into a date-based directory")
     func migrateWritesRolloutFile() throws {
         let fileSystem = MockFileManager()
-        let migrator = CodexNativeMigrator(fileSystem: fileSystem)
+        let migrator = CodexMigrator(fileSystem: fileSystem)
         let conversation = TestFixtures.makeConversation(id: "codex-migrate-write", source: .claudeCode)
 
         let result = try migrator.migrate(conversation)
@@ -151,7 +151,7 @@ struct CodexNativeMigratorTests {
             ) ?? "") + "\n").utf8
         )
 
-        let migrator = CodexNativeMigrator(fileSystem: fileSystem)
+        let migrator = CodexMigrator(fileSystem: fileSystem)
 
         do {
             _ = try migrator.migrate(conversation)

@@ -1,7 +1,7 @@
 import CSQLite
 import Foundation
 
-/// Finds prior Cursor-native migrations for strict deduplication.
+/// Finds prior Cursor migrations for strict deduplication.
 struct CursorMigrationScanner: Sendable {
     private let fileSystem: FileSystemProtocol
     private let targetFormatVersion: Int
@@ -43,7 +43,7 @@ struct CursorMigrationScanner: Sendable {
                 continue
             }
 
-            // Allow one-time re-migration for old Cursor-native format versions.
+            // Allow one-time re-migration for old format versions.
             if (metadata.targetFormatVersion ?? 0) < targetFormatVersion {
                 continue
             }

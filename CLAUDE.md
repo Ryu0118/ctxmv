@@ -15,10 +15,7 @@ CLI tool to read, display, export, and migrate conversation sessions across AI c
 - `Sources/ctxmv/` — Entry point (CTXMVMain.swift only)
 - `Sources/CTXMVCLI/` — ArgumentParser-based CLI command definitions
 - `Sources/CTXMVKit/` — Core logic (CLI-independent)
-  - `Providers/` — Session readers per agent (`SessionProvider` protocol)
-  - `Migrators/` — Native session writers per agent (`SessionMigrator` protocol)
-  - `Models/` — Shared schemas + enums (`UnifiedConversation`, `AgentSource`, `MessageRole`, etc.)
-  - `Formatters/` — Source-specific content decoders and display formatters
+  - `Migrators/` — Session writers per agent (`SessionMigrator` protocol)
 
 ## Code Style
 

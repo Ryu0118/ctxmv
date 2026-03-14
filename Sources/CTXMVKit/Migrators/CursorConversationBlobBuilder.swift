@@ -5,13 +5,13 @@ import Foundation
     import Crypto
 #endif
 
-/// Stores the blobs required to populate a Cursor-native conversation store.
+/// Stores the blobs required to populate a Cursor conversation store.
 struct CursorConversationBlobs: Sendable {
     let messageBlobs: [(idHex: String, data: Data)]
     let rootBlobID: String
 }
 
-/// Builds Cursor-native blob payloads from a unified conversation.
+/// Builds Cursor blob payloads from a unified conversation.
 struct CursorConversationBlobBuilder: Sendable {
     func blobs(for conversation: UnifiedConversation, projectPath: String) -> CursorConversationBlobs {
         let messages = conversation.messages.filter { $0.role == .user || $0.role == .assistant }

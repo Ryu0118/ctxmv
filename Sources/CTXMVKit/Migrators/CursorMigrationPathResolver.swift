@@ -12,7 +12,7 @@ struct CursorMigrationPaths: Sendable {
     let transcriptFile: URL
 }
 
-/// Resolves Cursor-native storage locations from a conversation and project path.
+/// Resolves Cursor storage locations from a conversation and project path.
 struct CursorMigrationPathResolver: Sendable {
     private let projectPathOverride: String?
     private let homeDirectory: URL

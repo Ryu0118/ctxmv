@@ -1,7 +1,7 @@
 import Foundation
 
-/// Writes unified conversations into Codex's native rollout format.
-struct CodexNativeMigrator: SessionMigrator, Sendable {
+/// Writes unified conversations into Codex's rollout format.
+struct CodexMigrator: SessionMigrator, Sendable {
     let target: AgentSource = .codex
 
     private let fileSystem: FileSystemProtocol
@@ -77,7 +77,7 @@ struct CodexNativeMigrator: SessionMigrator, Sendable {
             to: output
         )
 
-        logger.info("💾 Wrote native Codex session messages=\(conversation.messages.count) path=\(output.fileURL.path)")
+        logger.info("💾 Wrote Codex session messages=\(conversation.messages.count) path=\(output.fileURL.path)")
         return .written(path: output.fileURL.path, sessionID: sessionId)
     }
 
@@ -118,7 +118,7 @@ struct CodexNativeMigrator: SessionMigrator, Sendable {
         sessionId: String,
         sessionsBase: URL
     ) -> SessionOutputLocation {
-        // Match Codex's native rollout naming so `codex resume` recognizes the file layout.
+        // Match Codex's rollout naming so `codex resume` recognizes the file layout.
         let dateParts = SessionDateParts(date: createdAt)
         let directory = sessionsBase
             .appendingPathComponent(String(dateParts.year), isDirectory: true)

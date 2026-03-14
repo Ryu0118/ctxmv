@@ -1,7 +1,7 @@
 import Foundation
 
-/// Orchestrates native Cursor migration by delegating storage-specific work.
-struct CursorNativeMigrator: SessionMigrator, Sendable {
+/// Orchestrates Cursor migration by delegating storage-specific work.
+struct CursorMigrator: SessionMigrator, Sendable {
     let target: AgentSource = .cursor
 
     private enum Defaults {
@@ -71,7 +71,7 @@ struct CursorNativeMigrator: SessionMigrator, Sendable {
         )
 
         let databasePath = sessionDirectory.appendingPathComponent("store.db").path
-        // Write both Cursor backends: `store.db` powers the native session store,
+        // Write both Cursor backends: `store.db` powers the session store,
         // while the transcript file preserves compatibility with transcript-based fallbacks.
         try databaseWriter.writeStoreDatabase(
             at: databasePath,
@@ -81,7 +81,7 @@ struct CursorNativeMigrator: SessionMigrator, Sendable {
         )
         try transcriptWriter.write(conversation, to: paths.transcriptFile)
 
-        logger.info("💾 Wrote native Cursor session messages=\(conversation.messages.count) path=\(databasePath)")
+        logger.info("💾 Wrote Cursor session messages=\(conversation.messages.count) path=\(databasePath)")
         return .written(path: databasePath, sessionID: sessionId)
     }
 
@@ -122,7 +122,7 @@ struct CursorNativeMigrator: SessionMigrator, Sendable {
         return MigratorUtils.hexString(Data(json.utf8))
     }
 
-    /// Serializes ctxmv's migration bookkeeping JSON stored alongside Cursor's native metadata.
+    /// Serializes ctxmv's migration bookkeeping JSON stored alongside Cursor's metadata.
     private func migrationMetadataJSON(
         originId: String,
         originSource: AgentSource,

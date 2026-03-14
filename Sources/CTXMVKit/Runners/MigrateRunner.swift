@@ -68,12 +68,12 @@ package struct MigrateRunner: Sendable {
         }
     }
 
-    /// Selects the native migrator matching the requested target agent.
+    /// Selects the migrator matching the requested target agent.
     private func buildMigrator() -> SessionMigrator {
         switch target {
-        case .claudeCode: ClaudeCodeNativeMigrator()
-        case .codex: CodexNativeMigrator()
-        case .cursor: CursorNativeMigrator()
+        case .claudeCode: ClaudeCodeMigrator()
+        case .codex: CodexMigrator()
+        case .cursor: CursorMigrator()
         }
     }
 

@@ -10,7 +10,7 @@ Supports **Claude Code**, **Codex**, and **Cursor** (CLI agent via `cursor-agent
 
 ## Features
 
-- 🔀 Migrate sessions between any pair of agents in native format (resume-compatible)
+- 🔀 Migrate sessions between any pair of agents (resume-compatible)
 - 📋 List sessions across all agents in a unified table
 - 💬 Show conversation messages with role-colored output
 

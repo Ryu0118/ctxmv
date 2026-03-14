@@ -1,7 +1,7 @@
 import Foundation
 
-/// Writes unified conversations into Claude Code's native JSONL format.
-struct ClaudeCodeNativeMigrator: SessionMigrator, Sendable {
+/// Writes unified conversations into Claude Code's JSONL format.
+struct ClaudeCodeMigrator: SessionMigrator, Sendable {
     let target: AgentSource = .claudeCode
 
     private let fileSystem: FileSystemProtocol
@@ -47,7 +47,7 @@ struct ClaudeCodeNativeMigrator: SessionMigrator, Sendable {
         }
 
         _ = fileSystem.createFile(atPath: fileURL.path, contents: data, attributes: nil)
-        logger.info("💾 Wrote native Claude Code session messages=\(conversation.messages.count) path=\(fileURL.path)")
+        logger.info("💾 Wrote Claude Code session messages=\(conversation.messages.count) path=\(fileURL.path)")
         return .written(path: fileURL.path, sessionID: sessionId)
     }
 

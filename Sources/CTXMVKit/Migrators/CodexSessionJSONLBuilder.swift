@@ -1,6 +1,6 @@
 import Foundation
 
-/// Builds native Codex session JSONL from a unified conversation model.
+/// Builds Codex session JSONL from a unified conversation model.
 /// Pure transformation logic lives here so migration I/O stays easy to test.
 struct CodexSessionJSONLBuilder: Sendable {
     private let workingDirectoryProvider: @Sendable () -> String
