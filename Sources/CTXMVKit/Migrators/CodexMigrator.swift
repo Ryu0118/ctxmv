@@ -9,7 +9,9 @@ struct CodexMigrator: SessionMigrator, Sendable {
 
     private enum StorageDefaults {
         static let sessionsDirectory = ".codex/sessions"
-        static let snapSessionsDirectory = "snap/codex/current/.codex/sessions"
+        /// Snap remaps $HOME to ~/snap/codex/<rev>/, so codex_home = $HOME
+        /// and sessions live at $HOME/sessions/ (no .codex prefix).
+        static let snapSessionsDirectory = "snap/codex/current/sessions"
         static let filePrefix = "rollout"
     }
 
