@@ -94,10 +94,14 @@ struct CodexMigrator: SessionMigrator, Sendable {
         }
     }
 
-    /// Codex stores sessions under `~/.codex/sessions/<year>/<month>/<day>/`.
-    /// Snap-packaged Codex remaps HOME to `~/snap/codex/<rev>/`, so sessions must be
-    /// written there for `codex resume` to find them.
+    /// Resolves the Codex sessions directory following the same logic as Codex itself:
+    /// 1. `CODEX_HOME` env var → `$CODEX_HOME/sessions/`
+    /// 2. Snap-packaged Codex (~/snap/codex/ exists) → `~/snap/codex/current/sessions/`
+    /// 3. Default → `~/.codex/sessions/`
     private func sessionsBaseDirectory() -> URL {
+        if let codexHome = ProcessInfo.processInfo.environment["CODEX_HOME"], !codexHome.isEmpty {
+            return URL(fileURLWithPath: codexHome).appendingPathComponent("sessions")
+        }
         let home = fileSystem.homeDirectoryForCurrentUser
         let snapDir = home.appendingPathComponent("snap/codex")
         if fileSystem.fileExists(atPath: snapDir.path) {
