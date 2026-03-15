@@ -5,8 +5,6 @@
 [![release](https://img.shields.io/github/v/release/Ryu0118/ctxmv?style=flat-square)](https://github.com/Ryu0118/ctxmv/releases/latest)
 [![Follow @ryu_hu03](https://img.shields.io/badge/Follow-%40ryu__hu03-ffffff?style=flat-square&logo=x&logoColor=000000&labelColor=ffffff&color=ffffff)](https://x.com/ryu_hu03)
 
-A CLI tool to migrate conversation sessions between AI coding agents.
-
 ✨ **You no longer need to suffer through rate limits: when one coding agent hits its limit, migrate the session to another and keep going.**
 
 | Claude Code | Codex | Cursor |
