@@ -3,7 +3,7 @@ import Logging
 import Rainbow
 
 /// Lists sessions across all providers, applying optional filters, and prints the result.
-package struct ListRunner: Sendable {
+package struct ListRunner {
     private let source: AgentSource?
     private let project: String?
     private let excludeObserver: Bool

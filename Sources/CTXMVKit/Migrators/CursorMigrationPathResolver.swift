@@ -6,14 +6,14 @@ import Foundation
 #endif
 
 /// Groups the destination paths required for a Cursor migration.
-struct CursorMigrationPaths: Sendable {
+struct CursorMigrationPaths {
     let projectPath: String
     let chatsWorkspaceDirectory: URL
     let transcriptFile: URL
 }
 
 /// Resolves Cursor storage locations from a conversation and project path.
-struct CursorMigrationPathResolver: Sendable {
+struct CursorMigrationPathResolver {
     private let projectPathOverride: String?
     private let homeDirectory: URL
 

@@ -2,7 +2,7 @@ import Foundation
 
 /// Builds Codex session JSONL from a unified conversation model.
 /// Pure transformation logic lives here so migration I/O stays easy to test.
-struct CodexSessionJSONLBuilder: Sendable {
+struct CodexSessionJSONLBuilder {
     private let workingDirectoryProvider: @Sendable () -> String
 
     init(
@@ -158,7 +158,7 @@ struct CodexSessionJSONLBuilder: Sendable {
 }
 
 /// Structured representation of a Codex session file before JSON encoding.
-struct CodexSessionDocument: Sendable {
+struct CodexSessionDocument {
     let migrationMetadata: MigrationMeta
     let entries: [CodexEntry]
 
@@ -186,7 +186,7 @@ private extension CodexSessionJSONLBuilder {
 
     /// Precomputed values shared across entry builders so formatting and
     /// digest calculation stay single-sourced.
-    struct BuildContext: Sendable {
+    struct BuildContext {
         let conversation: UnifiedConversation
         let sessionId: String
         let originDigest: String

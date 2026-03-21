@@ -9,11 +9,13 @@ package extension Logger.MetadataValue {
 }
 
 package extension Logger.Metadata {
-    static func color(_ color: NamedColor) -> Self { ["color": .color(color)] }
+    static func color(_ color: NamedColor) -> Self {
+        ["color": .color(color)]
+    }
 }
 
 /// Writes colored log messages to standard output.
-package struct ColorLogHandler: LogHandler, Sendable {
+package struct ColorLogHandler: LogHandler {
     package var metadata: Logger.Metadata = [:]
     package var logLevel: Logger.Level = .info
 

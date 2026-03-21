@@ -2,13 +2,13 @@ import Foundation
 import Logging
 
 /// Finds a session and prints its conversation messages.
-package struct ShowRunner: Sendable {
+package struct ShowRunner {
     private enum Defaults {
         static let autoLargeSessionMessageLimit = 100
         static let largeSessionByteThreshold: Int64 = 1_048_576
     }
 
-    private struct LocatedSession: Sendable {
+    private struct LocatedSession {
         let conversation: UnifiedConversation
         let summary: SessionSummary?
         let appliedMessageLimit: Int?

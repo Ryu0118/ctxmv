@@ -2,7 +2,6 @@
 import Foundation
 import Testing
 
-@Suite("Verifies Codex migration output as structured entries and rollout files.")
 struct CodexMigratorTests {
     @Test("makeDocument emits migration meta, session meta, and paired assistant entries")
     func makeDocumentBuildsStructuredDocument() throws {
@@ -43,7 +42,7 @@ struct CodexMigratorTests {
     }
 
     @Test("makeDocument replaces the first noisy user prompt and skips unsupported roles")
-    func makeDocumentSanitizesFirstNoiseAndSkipsUnsupportedRoles() throws {
+    func makeDocumentSanitizesFirstNoiseAndSkipsUnsupportedRoles() {
         let builder = CodexSessionJSONLBuilder { "/fallback/cwd" }
         let conversation = TestFixtures.makeConversation(
             id: "codex-build-noise",

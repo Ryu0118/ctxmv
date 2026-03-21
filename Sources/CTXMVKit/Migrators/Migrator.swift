@@ -1,7 +1,7 @@
 import Foundation
 
 /// Describes the files written by a successful migration.
-enum MigrationResult: Sendable {
+enum MigrationResult {
     case written(path: String, sessionID: String)
 }
 

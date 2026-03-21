@@ -6,7 +6,7 @@
 import Foundation
 
 /// Origin snapshot used for deduplication keys and serialized migration metadata.
-package struct MigrationOrigin: Sendable {
+package struct MigrationOrigin {
     package let originId: String
     package let originSource: AgentSource
     package let originMessageCount: Int
@@ -26,7 +26,7 @@ package struct MigrationOrigin: Sendable {
 }
 
 /// Records the source snapshot for a migrated conversation.
-struct MigrationMeta: Codable, Sendable {
+struct MigrationMeta: Codable {
     static let migrationType = "ctxmv_migration"
 
     let type: String // "ctxmv_migration"

@@ -13,14 +13,15 @@ private enum ClaudeCodeSessionReaderTestSupport {
     }
 }
 
-@Suite("Covers encoded project path decoding in Claude Code storage paths.")
 struct DecodeProjectPathTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let input: String
         let expected: String?
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(
@@ -41,14 +42,15 @@ struct DecodeProjectPathTests {
     }
 }
 
-@Suite("Verifies role inference from Claude Code JSONL entries.")
 struct ClaudeCodeRoleTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let jsonl: String
         let expected: MessageRole?
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(
@@ -82,14 +84,15 @@ struct ClaudeCodeRoleTests {
     }
 }
 
-@Suite("Verifies text extraction from Claude Code JSONL entries.")
 struct ClaudeCodeContentTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let jsonl: String
         let expected: String
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(
@@ -125,14 +128,15 @@ struct ClaudeCodeContentTests {
     }
 }
 
-@Suite("Verifies which Claude Code entry types are skipped as non-message data.")
 struct ClaudeCodeSkipTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let jsonl: String
         let expected: Bool
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(description: "progress → skip", jsonl: #"{"type":"progress"}"#, expected: true),
@@ -158,7 +162,6 @@ struct ClaudeCodeSkipTests {
     }
 }
 
-@Suite("Exercises Claude Code session listing and loading against mock storage.")
 struct ClaudeCodeSessionTests {
     /// Shared file fixture that mirrors Claude Code's on-disk project/session hierarchy.
     private struct Fixture {
@@ -167,8 +170,13 @@ struct ClaudeCodeSessionTests {
         let encodedProjectDirectory = "-Users-example-test"
         let sessionID = "session-abc"
 
-        var projectDir: URL { baseDir.appendingPathComponent(encodedProjectDirectory) }
-        var sessionFile: URL { projectDir.appendingPathComponent("\(sessionID).jsonl") }
+        var projectDir: URL {
+            baseDir.appendingPathComponent(encodedProjectDirectory)
+        }
+
+        var sessionFile: URL {
+            projectDir.appendingPathComponent("\(sessionID).jsonl")
+        }
 
         /// Writes one JSONL session into the encoded project directory.
         mutating func configureSession(jsonl: String = TestFixtures.claudeCodeJSONL()) {

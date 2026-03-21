@@ -2,15 +2,16 @@
 import Foundation
 import Testing
 
-@Suite("Covers raw and protobuf-backed Cursor blob message extraction.")
 struct CursorBlobTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let data: Data
         let expectedRole: MessageRole?
         let expectedContent: String?
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         private static let multiBlockAssistantJSON =
             // swiftlint:disable:next line_length
@@ -85,7 +86,6 @@ struct CursorBlobTests {
     }
 }
 
-@Suite("Verifies message deduplication after parsing Cursor blob messages.")
 struct CursorDedupTests {
     @Test("conversation(fromDatabaseAt:) deduplicates identical messages from raw and protobuf blobs")
     func dedup() throws {
@@ -119,14 +119,15 @@ struct CursorDedupTests {
     }
 }
 
-@Suite("Verifies the hex-decoding helper used by Cursor metadata parsing.")
 struct HexDecodeTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let input: String
         let expected: Data?
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(description: "valid ASCII hex", input: "48656c6c6f", expected: Data("Hello".utf8)),
@@ -142,7 +143,6 @@ struct HexDecodeTests {
     }
 }
 
-@Suite("Exercises Cursor session loading across store.db and transcript fallbacks.")
 struct CursorSessionTests {
     /// Shared test fixture for Cursor transcript/database layouts.
     private struct Fixture {
@@ -154,9 +154,17 @@ struct CursorSessionTests {
         let genericProjectPath = "/Users/tester/workspaces/sample-project"
         let legacyProjectPath = "/Users/tester/workspaces/library/example"
 
-        var chatsRoot: URL { home.appendingPathComponent(".cursor/chats") }
-        var projectsRoot: URL { home.appendingPathComponent(".cursor/projects") }
-        var helperSkillFile: URL { home.appendingPathComponent(".agent/skills/generic-helper/SKILL.md") }
+        var chatsRoot: URL {
+            home.appendingPathComponent(".cursor/chats")
+        }
+
+        var projectsRoot: URL {
+            home.appendingPathComponent(".cursor/projects")
+        }
+
+        var helperSkillFile: URL {
+            home.appendingPathComponent(".agent/skills/generic-helper/SKILL.md")
+        }
 
         /// Mimics the legacy flat `agent-transcripts/<session>.jsonl` layout.
         mutating func configureLegacyTranscriptSession() -> URL {

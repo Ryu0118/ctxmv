@@ -1,7 +1,7 @@
 import Foundation
 
 /// Writes Cursor transcript JSONL files used by transcript-based fallback loading.
-struct CursorTranscriptWriter: Sendable {
+struct CursorTranscriptWriter {
     private let fileSystem: any FileSystemProtocol
 
     init(fileSystem: any FileSystemProtocol) {

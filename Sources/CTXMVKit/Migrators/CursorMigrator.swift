@@ -1,7 +1,7 @@
 import Foundation
 
 /// Orchestrates Cursor migration by delegating storage-specific work.
-struct CursorMigrator: SessionMigrator, Sendable {
+struct CursorMigrator: SessionMigrator {
     let target: AgentSource = .cursor
 
     private enum Defaults {
@@ -148,7 +148,7 @@ struct CursorMigrator: SessionMigrator, Sendable {
     }
 }
 
-private struct CursorSessionMeta: Encodable, Sendable {
+private struct CursorSessionMeta: Encodable {
     let agentId: String
     let latestRootBlobId: String
     let name: String

@@ -2,7 +2,6 @@
 import Foundation
 import Testing
 
-@Suite("Verifies project-path recovery heuristics from Cursor transcript contents.")
 struct CursorTranscriptProjectPathResolverTests {
     @Test("prefers working_directory from transcript metadata")
     func resolvesWorkingDirectory() {

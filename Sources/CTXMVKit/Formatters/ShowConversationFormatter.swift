@@ -2,7 +2,7 @@ import Foundation
 import Rainbow
 
 /// Formats a conversation for the `show` command without performing any I/O.
-package struct ShowConversationFormatter: Sendable {
+package struct ShowConversationFormatter {
     private let raw: Bool
 
     package init(raw: Bool) {

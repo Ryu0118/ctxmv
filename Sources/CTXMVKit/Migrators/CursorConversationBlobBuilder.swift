@@ -6,13 +6,13 @@ import Foundation
 #endif
 
 /// Stores the blobs required to populate a Cursor conversation store.
-struct CursorConversationBlobs: Sendable {
+struct CursorConversationBlobs {
     let messageBlobs: [(idHex: String, data: Data)]
     let rootBlobID: String
 }
 
 /// Builds Cursor blob payloads from a unified conversation.
-struct CursorConversationBlobBuilder: Sendable {
+struct CursorConversationBlobBuilder {
     func blobs(for conversation: UnifiedConversation, projectPath: String) -> CursorConversationBlobs {
         let messages = conversation.messages.filter { $0.role == .user || $0.role == .assistant }
         var blobsByID: [String: Data] = [:]
@@ -144,7 +144,7 @@ struct CursorConversationBlobBuilder: Sendable {
         return data
     }
 
-    // agent.v1.UserMessage
+    /// agent.v1.UserMessage
     private func buildUserMessageBlob(text: String, messageID: String) -> Data {
         var data = Data()
         appendLengthDelimitedField(number: 1, value: Data(text.utf8), to: &data)
@@ -152,21 +152,21 @@ struct CursorConversationBlobBuilder: Sendable {
         return data
     }
 
-    // agent.v1.AssistantMessage
+    /// agent.v1.AssistantMessage
     private func buildAssistantMessageBlob(text: String) -> Data {
         var data = Data()
         appendLengthDelimitedField(number: 1, value: Data(text.utf8), to: &data)
         return data
     }
 
-    // agent.v1.ConversationStep
+    /// agent.v1.ConversationStep
     private func buildConversationStepAssistantBlob(text: String) -> Data {
         var data = Data()
         appendLengthDelimitedField(number: 1, value: buildAssistantMessageBlob(text: text), to: &data)
         return data
     }
 
-    // agent.v1.AgentConversationTurnStructure
+    /// agent.v1.AgentConversationTurnStructure
     private func buildAgentConversationTurnStructureBlob(
         userMessageHash: Data,
         stepHashes: [Data],
@@ -181,7 +181,7 @@ struct CursorConversationBlobBuilder: Sendable {
         return data
     }
 
-    // agent.v1.ConversationTurnStructure
+    /// agent.v1.ConversationTurnStructure
     private func buildConversationTurnStructureBlob(agentTurnStructure: Data) -> Data {
         var data = Data()
         appendLengthDelimitedField(number: 1, value: agentTurnStructure, to: &data)
@@ -223,12 +223,12 @@ struct CursorConversationBlobBuilder: Sendable {
     }
 }
 
-private struct CursorRoleBlob: Codable, Sendable {
+private struct CursorRoleBlob: Codable {
     let role: String
     let content: [CursorRoleTextBlock]
 }
 
-private struct CursorRoleTextBlock: Codable, Sendable {
+private struct CursorRoleTextBlock: Codable {
     let type: String
     let text: String
 }

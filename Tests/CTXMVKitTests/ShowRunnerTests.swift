@@ -2,7 +2,6 @@
 import Foundation
 import Testing
 
-@Suite("Verifies show-session lookup and auto-limit policy without real providers.")
 struct ShowRunnerTests {
     /// Spy provider that records how `ShowRunner` attempts to load sessions.
     final class TrackingSessionReader: SessionReader, @unchecked Sendable {
@@ -32,8 +31,10 @@ struct ShowRunnerTests {
     }
 
     /// Load-limit behavior when resolving from `SessionSummary` (auto cap vs explicit `messageLimit`).
-    private struct LoadLimitScenario: CustomTestStringConvertible, Sendable {
-        var testDescription: String { name }
+    private struct LoadLimitScenario: CustomTestStringConvertible {
+        var testDescription: String {
+            name
+        }
 
         let name: String
         let byteSize: Int64

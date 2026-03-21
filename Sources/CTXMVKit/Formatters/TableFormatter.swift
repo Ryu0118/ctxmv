@@ -1,7 +1,7 @@
 import Foundation
 
 /// Column definition for table formatting.
-package struct TableColumn: Sendable {
+package struct TableColumn {
     let title: String
     let width: Int
     /// Gap (number of spaces) after this column. Last column has no gap.
@@ -15,7 +15,7 @@ package struct TableColumn: Sendable {
 }
 
 /// Formats tabular data with consistent column alignment.
-package struct TableFormatter: Sendable {
+package struct TableFormatter {
     let columns: [TableColumn]
 
     package init(columns: [TableColumn]) {

@@ -13,14 +13,15 @@ private enum CodexSessionReaderTestSupport {
     }
 }
 
-@Suite("Verifies role extraction across modern and legacy Codex entry shapes.")
 struct CodexRoleTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let jsonl: String
         let expected: MessageRole?
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(
@@ -70,14 +71,15 @@ struct CodexRoleTests {
     }
 }
 
-@Suite("Verifies content extraction across supported Codex payload variants.")
 struct CodexContentTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let jsonl: String
         let expected: String
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(
@@ -113,7 +115,6 @@ struct CodexContentTests {
     }
 }
 
-@Suite("Verifies rollout-file discovery against naming rules and nested directories.")
 struct CodexRolloutTests {
     @Test("filters by rollout- prefix and .jsonl extension")
     func filterFiles() throws {
@@ -136,7 +137,6 @@ struct CodexRolloutTests {
     }
 }
 
-@Suite("Exercises Codex session listing and loading against mock rollout files.")
 struct CodexSessionTests {
     /// Shared rollout fixture rooted under a fake `.codex/sessions` subtree.
     private struct Fixture {
@@ -144,7 +144,9 @@ struct CodexSessionTests {
         let baseDir = URL(fileURLWithPath: "/mock/codex/sessions")
         let subdirectoryName = "sub1"
 
-        var subdirectory: URL { baseDir.appendingPathComponent(subdirectoryName) }
+        var subdirectory: URL {
+            baseDir.appendingPathComponent(subdirectoryName)
+        }
 
         func rolloutFile(named fileName: String) -> URL {
             subdirectory.appendingPathComponent(fileName)

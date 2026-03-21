@@ -2,7 +2,6 @@
 import Foundation
 import Testing
 
-@Suite("Validates compact and raw rendering in the show conversation formatter.")
 struct ShowConversationFormatterTests {
     @Test("compact mode omits structured XML blocks")
     func compactModeOmitsStructuredBlocks() {

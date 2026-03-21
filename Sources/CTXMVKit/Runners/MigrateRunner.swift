@@ -3,7 +3,7 @@ import Logging
 import Rainbow
 
 /// Finds a session, migrates it to a target agent format, and prints resume instructions.
-package struct MigrateRunner: Sendable {
+package struct MigrateRunner {
     private let sessionID: String
     private let target: AgentSource
     private let source: AgentSource?

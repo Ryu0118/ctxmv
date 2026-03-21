@@ -1,7 +1,7 @@
 import Foundation
 
 /// Writes unified conversations into Codex's rollout format.
-struct CodexMigrator: SessionMigrator, Sendable {
+struct CodexMigrator: SessionMigrator {
     let target: AgentSource = .codex
 
     private let fileSystem: any FileSystemProtocol
@@ -16,7 +16,7 @@ struct CodexMigrator: SessionMigrator, Sendable {
     }
 
     /// Breaks a session timestamp into both path components and the rollout filename stem.
-    private struct SessionDateParts: Sendable {
+    private struct SessionDateParts {
         let year: Int
         let month: Int
         let day: Int
@@ -43,7 +43,7 @@ struct CodexMigrator: SessionMigrator, Sendable {
     }
 
     /// Collects the destination directory and final rollout file path.
-    private struct SessionOutputLocation: Sendable {
+    private struct SessionOutputLocation {
         let directory: URL
         let fileURL: URL
     }

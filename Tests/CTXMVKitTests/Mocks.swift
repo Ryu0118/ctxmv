@@ -37,8 +37,14 @@ final class MockFileManager: FileSystemProtocol, @unchecked Sendable {
         return true
     }
 
-    func contents(atPath path: String) -> Data? { files[path] }
-    func fileExists(atPath path: String) -> Bool { files[path] != nil || directories[path] != nil }
+    func contents(atPath path: String) -> Data? {
+        files[path]
+    }
+
+    func fileExists(atPath path: String) -> Bool {
+        files[path] != nil || directories[path] != nil
+    }
+
     func fileExists(atPath path: String, isDirectory: UnsafeMutablePointer<ObjCBool>?) -> Bool {
         if directories[path] != nil { isDirectory?.pointee = true; return true }
         if files[path] != nil { isDirectory?.pointee = false; return true }
@@ -67,8 +73,14 @@ final class MockSQLiteReader: SQLiteReader, @unchecked Sendable {
     var recentBlobResults: [(id: String, data: Data)]?
     var lastRecentBlobLimit: Int?
 
-    func query(dbPath _: String, sql _: String) throws -> [[String: Any]] { queryResults }
-    func queryBlobs(dbPath _: String) throws -> [(id: String, data: Data)] { blobResults }
+    func query(dbPath _: String, sql _: String) throws -> [[String: Any]] {
+        queryResults
+    }
+
+    func queryBlobs(dbPath _: String) throws -> [(id: String, data: Data)] {
+        blobResults
+    }
+
     func queryRecentBlobs(dbPath _: String, limit: Int) throws -> [(id: String, data: Data)] {
         lastRecentBlobLimit = limit
         return recentBlobResults ?? Array(blobResults.suffix(limit))
@@ -120,7 +132,7 @@ enum TestFixtures {
         """
     }
 
-    // Codex JSONL lines
+    /// Codex JSONL lines
     static func codexJSONL(sessionId: String = "codex-session-1", timestamp: String = "2024-03-09T00:00:00.000Z") -> String {
         """
         {"type":"session_meta","timestamp":"\(timestamp)","payload":{"id":"\(sessionId)","timestamp":"\(timestamp)","cwd":"/mock/project","cli_version":"0.0.0"}}

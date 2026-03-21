@@ -2,7 +2,6 @@
 import Foundation
 import Testing
 
-@Suite("Covers recursive dedup lookup plus digest and count fallback behavior.")
 struct MigrationDeduplicatorTests {
     @Test("findExistingMigrationRecursive finds a duplicate in nested year/month/day directories")
     func recursiveFindsNestedDuplicate() {

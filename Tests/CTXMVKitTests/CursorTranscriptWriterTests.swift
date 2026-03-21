@@ -2,7 +2,6 @@
 import Foundation
 import Testing
 
-@Suite("Verifies Cursor transcript JSONL output used by fallback loading.")
 struct CursorTranscriptWriterTests {
     @Test("write serializes user and assistant messages as Cursor transcript JSONL")
     func writeTranscript() throws {

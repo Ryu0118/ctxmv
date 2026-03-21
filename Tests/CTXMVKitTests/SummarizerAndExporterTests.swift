@@ -2,19 +2,20 @@
 import Foundation
 import Testing
 
-@Suite("Verifies JSONL line decoding for valid and invalid inputs.")
 struct JSONLParserTests {
-    struct SimpleEntry: Codable, Sendable {
+    struct SimpleEntry: Codable {
         let type: String
         let message: String
     }
 
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let input: String
         let isValid: Bool
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(description: "valid JSON line", input: #"{"type":"user","message":"hello"}"#, isValid: true),
@@ -38,14 +39,15 @@ struct JSONLParserTests {
     }
 }
 
-@Suite("Verifies ISO 8601 parsing with and without fractional seconds.")
 struct DateUtilsTests {
-    struct TestCase: CustomTestStringConvertible, Sendable {
+    struct TestCase: CustomTestStringConvertible {
         let description: String
         let input: String
         let isValid: Bool
 
-        var testDescription: String { description }
+        var testDescription: String {
+            description
+        }
 
         static let allCases: [TestCase] = [
             TestCase(description: "fractional seconds", input: "2024-03-09T12:30:00.123Z", isValid: true),

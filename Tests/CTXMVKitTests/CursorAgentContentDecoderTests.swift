@@ -2,7 +2,6 @@
 import Foundation
 import Testing
 
-@Suite("Verifies Cursor transcript wrapper stripping.")
 struct CursorAgentContentDecoderTests {
     @Test("decodes single user_query wrapper")
     func decodeSingle() {
@@ -29,7 +28,6 @@ struct CursorAgentContentDecoderTests {
     }
 }
 
-@Suite("Verifies unified messages delegate Cursor-specific decoding when needed.")
 struct UnifiedMessageCursorDecodingTests {
     @Test("decodedContent applies Cursor decoder for cursor source")
     func appliesCursorDecoder() {

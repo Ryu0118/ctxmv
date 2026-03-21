@@ -39,14 +39,15 @@ private enum DecoderFixtures {
     static let unchangedPlain = "Plain text with no tags"
 }
 
-@Suite("Verifies command-tag decoding into a compact textual representation.")
 struct ClaudeCodeCommandTests {
-    struct CommandCase: CustomTestStringConvertible, Sendable {
+    struct CommandCase: CustomTestStringConvertible {
         let input: String
         let expectedContains: [String]
         let expectedExcludes: [String]
 
-        var testDescription: String { "command block" }
+        var testDescription: String {
+            "command block"
+        }
 
         static let allCases: [CommandCase] = [
             CommandCase(
@@ -74,7 +75,6 @@ struct ClaudeCodeCommandTests {
     }
 }
 
-@Suite("Verifies caveat blocks collapse into the user-facing short label.")
 struct ClaudeCodeCaveatTests {
     @Test("replaces caveat with short label")
     func replaces() {
@@ -85,14 +85,15 @@ struct ClaudeCodeCaveatTests {
     }
 }
 
-@Suite("Verifies stdout blocks unwrap into a user-facing label and body.")
 struct ClaudeCodeStdoutTests {
-    struct StdoutCase: CustomTestStringConvertible, Sendable {
+    struct StdoutCase: CustomTestStringConvertible {
         let input: String
         let expectedPrefix: String
         let expectedBody: String
 
-        var testDescription: String { "stdout" }
+        var testDescription: String {
+            "stdout"
+        }
 
         static let allCases: [StdoutCase] = [
             StdoutCase(
@@ -116,14 +117,15 @@ struct ClaudeCodeStdoutTests {
     }
 }
 
-@Suite("Verifies task notification decoding across representative payload shapes.")
 struct ClaudeCodeTaskNotificationTests {
-    struct TaskCase: CustomTestStringConvertible, Sendable {
+    struct TaskCase: CustomTestStringConvertible {
         let input: String
         let expectedSummary: String?
         let expectedResult: String?
 
-        var testDescription: String { "task notification" }
+        var testDescription: String {
+            "task notification"
+        }
 
         static let allCases: [TaskCase] = [
             TaskCase(
@@ -158,11 +160,12 @@ struct ClaudeCodeTaskNotificationTests {
     }
 }
 
-@Suite("Verifies unknown or non-Claude tags remain untouched.")
 struct ClaudeCodeUnchangedTests {
-    struct UnchangedCase: CustomTestStringConvertible, Sendable {
+    struct UnchangedCase: CustomTestStringConvertible {
         let input: String
-        var testDescription: String { "unchanged" }
+        var testDescription: String {
+            "unchanged"
+        }
 
         static let allCases: [UnchangedCase] = [
             UnchangedCase(input: DecoderFixtures.unchangedGenerics),
@@ -180,7 +183,6 @@ struct ClaudeCodeUnchangedTests {
     }
 }
 
-@Suite("Verifies mixed-content integration behavior for Claude Code decoding.")
 struct ClaudeCodeIntegrationTests {
     @Test("decodes mixed content preserving non-Claude XML")
     func mixedContent() {

@@ -2,7 +2,7 @@ import CSQLite
 import Foundation
 
 /// Persists Cursor blob and metadata tables into `store.db`.
-struct CursorStoreDatabaseWriter: Sendable {
+struct CursorStoreDatabaseWriter {
     /// Creates or updates Cursor's SQLite store with both blob rows and metadata rows.
     func writeStoreDatabase(
         at path: String,

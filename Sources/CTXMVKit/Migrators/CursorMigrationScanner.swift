@@ -2,7 +2,7 @@ import CSQLite
 import Foundation
 
 /// Finds prior Cursor migrations for strict deduplication.
-struct CursorMigrationScanner: Sendable {
+struct CursorMigrationScanner {
     private let fileSystem: any FileSystemProtocol
     private let targetFormatVersion: Int
 
