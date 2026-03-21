@@ -2,7 +2,6 @@
 import Foundation
 import Testing
 
-@Suite("Verifies table layout, padding, and separator width calculations.")
 struct TableFormatterTests {
     static let columns: [TableColumn] = [
         TableColumn(title: "NAME", width: 10),
@@ -62,7 +61,6 @@ struct TableFormatterTests {
     }
 }
 
-@Suite("Verifies the row values prepared for list command table output.")
 struct ListRunnerRowValuesTests {
     @Test("produces correct number of columns")
     func columnCount() {
@@ -85,8 +83,10 @@ struct ListRunnerRowValuesTests {
         #expect(values[5] == "hello world")
     }
 
-    private struct DateColumnScenario: CustomTestStringConvertible, Sendable {
-        var testDescription: String { name }
+    private struct DateColumnScenario: CustomTestStringConvertible {
+        var testDescription: String {
+            name
+        }
 
         let name: String
         let source: AgentSource
@@ -165,7 +165,6 @@ struct ListRunnerRowValuesTests {
     }
 }
 
-@Suite("Verifies middle truncation behavior for displayed project paths.")
 struct PathTruncatedTests {
     @Test("short path returned as-is")
     func shortPath() {
@@ -175,9 +174,9 @@ struct PathTruncatedTests {
 
     @Test("long path keeps trailing component")
     func longPathKeepsTrailing() {
-        let path = "/Users/example/workspace/projects/ctxmv"
+        let path = "/Users/example/workspace/projects/alpha"
         let result = path.pathTruncated(to: 25)
-        #expect(result.hasSuffix("/ctxmv"))
+        #expect(result.hasSuffix("/alpha"))
         #expect(result.hasPrefix("/Users/example/"))
         #expect(result.contains("..."))
         #expect(result.count <= 25)
@@ -185,9 +184,9 @@ struct PathTruncatedTests {
 
     @Test("very tight limit falls back to ellipsis + trailing")
     func tightLimit() {
-        let path = "/Users/example/workspace/projects/ctxmv"
+        let path = "/Users/example/workspace/projects/alpha"
         let result = path.pathTruncated(to: 15)
-        #expect(result.hasSuffix("/ctxmv"))
+        #expect(result.hasSuffix("/alpha"))
         #expect(result.contains("..."))
         #expect(result.count <= 15)
     }
