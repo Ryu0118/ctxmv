@@ -5,6 +5,8 @@
 --indentcase false
 --stripunusedargs closure-only
 
+--disable redundantSwiftTestingSuite
+
 --exclude .build
 --exclude .swiftpm
 --exclude "**/.build/**"

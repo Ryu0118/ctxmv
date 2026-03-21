@@ -2,7 +2,10 @@
 import Foundation
 import Testing
 
+@Suite
 struct ProjectPathResolverTests {
+    // MARK: - Encoding
+
     @Test("encodedClaudeProjectPath matches ClaudeCodeMigrator-style collision")
     func encodingCollisionExample() {
         let hyphenated = "/Users/example/acme/foo-bar-baz"
@@ -23,6 +26,8 @@ struct ProjectPathResolverTests {
             .map { ProjectPathResolver.encodedClaudeProjectPath($0) }
         #expect(joined.allSatisfy { $0 == encoded })
     }
+
+    // MARK: - cdPath (JSONL-path-based resolution)
 
     @Test("prefers existing directory among colliding spellings")
     func picksExistingDirectory() {
@@ -55,7 +60,20 @@ struct ProjectPathResolverTests {
         #expect(resolved == URL(fileURLWithPath: path).standardizedFileURL.path)
     }
 
-    // MARK: - resolveProjectPath tests
+    @Test("falls back to stored string when no candidate directory exists")
+    func fallsBackToStoredWhenNothingExists() {
+        let fileSystem = MockFileManager()
+        let wrongNested = "/Users/example/acme/foo/bar/baz"
+        let jsonl = "/mock/home/.claude/projects/-Users-example-acme-foo-bar-baz/sess.jsonl"
+        let resolved = ProjectPathResolver.cdPath(
+            forStoredProjectPath: wrongNested,
+            writtenJSONLPath: jsonl,
+            fileSystem: fileSystem
+        )
+        #expect(resolved == wrongNested)
+    }
+
+    // MARK: - resolveProjectPath (standalone resolution without JSONL path)
 
     @Test("resolveProjectPath returns path as-is when it exists on disk")
     func resolveReturnsExistingPath() {
@@ -85,32 +103,10 @@ struct ProjectPathResolverTests {
         #expect(resolved == nonexistent)
     }
 
-    @Test("resolveProjectPath returns nil for nil input")
-    func resolveReturnsNilForNil() {
+    @Test("resolveProjectPath returns nil for nil or empty input", arguments: [nil, ""] as [String?])
+    func resolveReturnsNilForNilOrEmpty(input: String?) {
         let fileSystem = MockFileManager()
-        let resolved = ProjectPathResolver.resolveProjectPath(nil, fileSystem: fileSystem)
+        let resolved = ProjectPathResolver.resolveProjectPath(input, fileSystem: fileSystem)
         #expect(resolved == nil)
-    }
-
-    @Test("resolveProjectPath returns nil for empty string")
-    func resolveReturnsNilForEmpty() {
-        let fileSystem = MockFileManager()
-        let resolved = ProjectPathResolver.resolveProjectPath("", fileSystem: fileSystem)
-        #expect(resolved == nil)
-    }
-
-    // MARK: - cdPath tests
-
-    @Test("falls back to stored string when no candidate directory exists")
-    func fallsBackToStoredWhenNothingExists() {
-        let fileSystem = MockFileManager()
-        let wrongNested = "/Users/example/acme/foo/bar/baz"
-        let jsonl = "/mock/home/.claude/projects/-Users-example-acme-foo-bar-baz/sess.jsonl"
-        let resolved = ProjectPathResolver.cdPath(
-            forStoredProjectPath: wrongNested,
-            writtenJSONLPath: jsonl,
-            fileSystem: fileSystem
-        )
-        #expect(resolved == wrongNested)
     }
 }
