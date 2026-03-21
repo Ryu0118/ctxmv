@@ -4,8 +4,16 @@ echo "$COMMAND" | grep -q '^git commit' || exit 0
 
 SRCROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 
-SWIFTFORMAT=$(command -v swiftformat) || exit 0
-SWIFTLINT=$(command -v swiftlint) || exit 0
+if [ -x "$SRCROOT/.nest/bin/swiftformat" ]; then
+  SWIFTFORMAT="$SRCROOT/.nest/bin/swiftformat"
+else
+  SWIFTFORMAT=$(command -v swiftformat) || exit 0
+fi
+if [ -x "$SRCROOT/.nest/bin/swiftlint" ]; then
+  SWIFTLINT="$SRCROOT/.nest/bin/swiftlint"
+else
+  SWIFTLINT=$(command -v swiftlint) || exit 0
+fi
 
 STAGED_SWIFT_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.swift$' || true)
 if [ -z "$STAGED_SWIFT_FILES" ]; then

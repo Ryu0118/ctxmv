@@ -99,8 +99,9 @@ struct ClaudeCodeContentTests {
             ),
             TestCase(
                 description: "array content with text blocks",
-                jsonl: #"{"type":"assistant","message":{"content":[{"type":"text","text":"Part 1"},{"type":"tool_use"},{"type":"text","text":"Part 2"}"#
-                + #"]}}"#,
+                jsonl:
+                #"{"type":"assistant","message":{"content":[{"type":"text","text":"Part 1"},{"type":"tool_use""#
+                    + #"},{"type":"text","text":"Part 2"}]}}"#,
                 expected: "Part 1\nPart 2"
             ),
             TestCase(

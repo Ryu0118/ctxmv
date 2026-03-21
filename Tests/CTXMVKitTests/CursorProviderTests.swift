@@ -12,8 +12,8 @@ struct CursorBlobTests {
 
         var testDescription: String { description }
 
-        // swiftlint:disable:next line_length
         private static let multiBlockAssistantJSON =
+            // swiftlint:disable:next line_length
             #"{"role":"assistant","content":[{"type":"text","text":"Line 1"},{"type":"tool_use","name":"bash"},{"type":"text","text":"Line 2"}]}"#
 
         static let allCases: [TestCase] = [
@@ -290,7 +290,8 @@ struct CursorSessionTests {
         let sqlite = MockSQLiteReader()
         sqlite.queryResults = [[
             "key": "composerData",
-            "value": "7b226167656e744964223a22637572736f722d73657373696f6e222c226e616d65223a2254657374222c2263726561746564"
+            "value": "7b226167656e744964223a22637572736f722d73657373696f6e222c226e616d65223a2254657374222c"
+                + "2263726561746564"
                 + "4174223a313731303030303030303030302c226c617374557365644d6f64656c223a226770742d34227d",
         ]]
         sqlite.recentBlobResults = [
@@ -334,8 +335,10 @@ struct CursorSessionTests {
         let sqlite = MockSQLiteReader()
         sqlite.queryResults = [[
             "key": "composerData",
-            "value": "7b226167656e744964223a2263396630356437352d623935382d343263662d393332622d623038316138323239313734222c"
-                + "226e616d65223a2254657374222c22637265617465644174223a313731303030303030303030302c226c617374557365644d6f64656c223a226770742d34227d",
+            "value": "7b226167656e744964223a2263396630356437352d623935382d343263662d393332622d623038316138323239"
+                + "313734222c"
+                + "226e616d65223a2254657374222c22637265617465644174223a313731303030303030303030302c"
+                + "226c617374557365644d6f64656c223a226770742d34227d",
         ]]
         sqlite.blobResults = [
             (

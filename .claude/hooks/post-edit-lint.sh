@@ -5,7 +5,11 @@ echo "$FILE_PATH" | grep -q '\.swift$' || exit 0
 
 SRCROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 
-SWIFTLINT=$(command -v swiftlint) || exit 0
+if [ -x "$SRCROOT/.nest/bin/swiftlint" ]; then
+  SWIFTLINT="$SRCROOT/.nest/bin/swiftlint"
+else
+  SWIFTLINT=$(command -v swiftlint) || exit 0
+fi
 [ -f "$SRCROOT/.swiftlint.yml" ] || exit 0
 
 LINT_OUTPUT=$("$SWIFTLINT" lint --config "$SRCROOT/.swiftlint.yml" --strict --quiet "$FILE_PATH" 2>&1) || true

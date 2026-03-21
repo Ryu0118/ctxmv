@@ -26,8 +26,8 @@ struct CursorTranscriptProjectPathResolverTests {
     func fallsBackToWorkspacePath() {
         let fileSystem = MockFileManager()
         let workspacePath = "/Users/tester/workspaces/library/example"
-        let transcriptPath =
-            "/Users/tester/.cursor/projects/Users-tester-workspaces-library-example/agent-transcripts/session/session.jsonl"
+        let transcriptPath = "/Users/tester/.cursor/projects/Users-tester-workspaces-library-example"
+            + "/agent-transcripts/session/session.jsonl"
         let transcriptFile = URL(fileURLWithPath: transcriptPath)
         let resolver = CursorTranscriptProjectPathResolver(fileSystem: fileSystem)
 

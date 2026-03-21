@@ -35,20 +35,23 @@ struct CodexRoleTests {
             ),
             TestCase(
                 description: "response_item role=assistant → .assistant",
-                jsonl: #"{"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"done"}"#
-                    + #"]}}"#,
+                jsonl:
+                #"{"type":"response_item","payload":{"type":"message","role":"assistant""#
+                    + #","content":[{"type":"output_text","text":"done"}]}}"#,
                 expected: .assistant
             ),
             TestCase(
                 description: "response_item role=user → nil",
-                jsonl: #"{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"question"}"#
-                    + #"]}}"#,
+                jsonl:
+                #"{"type":"response_item","payload":{"type":"message","role":"user""#
+                    + #","content":[{"type":"input_text","text":"question"}]}}"#,
                 expected: nil
             ),
             TestCase(
                 description: "response_item role=developer → nil",
-                jsonl: #"{"type":"response_item","payload":{"type":"message","role":"developer","content":[{"type":"input_text","text":"system"}"#
-                    + #"]}}"#,
+                jsonl:
+                #"{"type":"response_item","payload":{"type":"message","role":"developer""#
+                    + #","content":[{"type":"input_text","text":"system"}]}}"#,
                 expected: nil
             ),
             TestCase(
@@ -84,8 +87,9 @@ struct CodexContentTests {
             ),
             TestCase(
                 description: "response_item payload.content output_text block",
-                jsonl: #"{"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Response"}"#
-                    + #"]}}"#,
+                jsonl:
+                #"{"type":"response_item","payload":{"type":"message","role":"assistant""#
+                    + #","content":[{"type":"output_text","text":"Response"}]}}"#,
                 expected: "Response"
             ),
             TestCase(
