@@ -1,7 +1,7 @@
 import Foundation
 
 /// Writes unified conversations into Claude Code's JSONL format.
-struct ClaudeCodeMigrator: SessionMigrator, Sendable {
+struct ClaudeCodeMigrator: SessionMigrator {
     let target: AgentSource = .claudeCode
 
     private let fileSystem: any FileSystemProtocol
@@ -65,7 +65,7 @@ struct ClaudeCodeMigrator: SessionMigrator, Sendable {
 
     /// Claude Code encodes absolute paths by replacing `/` with `-`.
     func encodedProjectPath(for path: String) -> String {
-        path.replacingOccurrences(of: "/", with: "-")
+        MigratorUtils.encodedClaudeProjectPath(path)
     }
 
     /// Builds the Claude Code JSONL payload, including the leading migration meta line.
@@ -126,7 +126,7 @@ struct ClaudeCodeMigrator: SessionMigrator, Sendable {
     }
 }
 
-// Maps unified roles to Claude Code entry shape (plain string vs block array).
+/// Maps unified roles to Claude Code entry shape (plain string vs block array).
 private struct ClaudeCodeMessageEncoding {
     let entryType: String
     let messageRole: String

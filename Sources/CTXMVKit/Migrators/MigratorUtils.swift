@@ -23,4 +23,9 @@ enum MigratorUtils {
               let encodedLine = String(data: data, encoding: .utf8) else { return nil }
         return encodedLine
     }
+
+    /// Claude Code `.claude/projects/<this>/` key: absolute path with `/` replaced by `-`.
+    static func encodedClaudeProjectPath(_ absolutePath: String) -> String {
+        absolutePath.replacingOccurrences(of: "/", with: "-")
+    }
 }
