@@ -87,6 +87,13 @@ file_length:
   warning: 600
   error: 1000
 
+identifier_name:
+  min_length: 3
+  max_length: 40
+  excluded:
+    - id
+    - to
+
 type_name:
   min_length: 3
   max_length: 50
