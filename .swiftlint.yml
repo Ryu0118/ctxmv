@@ -91,24 +91,6 @@ type_name:
   min_length: 3
   max_length: 50
 
-identifier_name:
-  min_length:
-    warning: 3
-    error: 1
-  max_length:
-    warning: 50
-    error: 60
-  excluded:
-    - id
-    - x
-    - y
-    - i
-    - j
-    - ok
-    - to
-    - db
-    - op
-
 nesting:
   type_level: 3
   function_level: 4

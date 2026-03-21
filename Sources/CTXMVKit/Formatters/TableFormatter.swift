@@ -24,18 +24,18 @@ package struct TableFormatter: Sendable {
 
     /// Format header row, padded to match column widths.
     package func formatHeader() -> String {
-        columns.enumerated().map { i, col in
+        columns.enumerated().map { index, col in
             let padded = pad(col.title, width: col.width)
-            return i < columns.count - 1 ? padded + String(repeating: " ", count: col.gap) : padded
+            return index < columns.count - 1 ? padded + String(repeating: " ", count: col.gap) : padded
         }.joined()
     }
 
     /// Format a data row from cell values. Values beyond column count are ignored.
     package func formatRow(_ values: [String]) -> String {
-        columns.enumerated().map { i, col in
-            let value = i < values.count ? values[i] : ""
+        columns.enumerated().map { index, col in
+            let value = index < values.count ? values[index] : ""
             let padded = pad(value, width: col.width)
-            return i < columns.count - 1 ? padded + String(repeating: " ", count: col.gap) : padded
+            return index < columns.count - 1 ? padded + String(repeating: " ", count: col.gap) : padded
         }.joined()
     }
 

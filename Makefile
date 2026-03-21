@@ -1,6 +1,3 @@
-# Developer tasks for ctxmv (Swift Package).
-# Toolchain: nest + nestfile.yaml → ./.nest/bin (run: make install-commands).
-
 SWIFTFORMAT := .nest/bin/swiftformat
 SWIFTLINT := .nest/bin/swiftlint
 

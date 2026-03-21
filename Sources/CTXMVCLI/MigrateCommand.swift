@@ -12,8 +12,8 @@ struct MigrateCommand: AsyncParsableCommand {
     @Argument(help: "Session ID to migrate")
     var sessionID: String
 
-    @Option(name: .long, help: "Target agent: claude-code, codex, or cursor")
-    var to: AgentSource
+    @Option(name: .customLong("to"), help: "Target agent: claude-code, codex, or cursor")
+    var target: AgentSource
 
     @OptionGroup var options: GlobalOptions
 
@@ -21,7 +21,7 @@ struct MigrateCommand: AsyncParsableCommand {
         if options.verbose { logger.logLevel = .debug }
         try await MigrateRunner(
             sessionID: sessionID,
-            target: to
+            target: target
         ).run()
     }
 }
