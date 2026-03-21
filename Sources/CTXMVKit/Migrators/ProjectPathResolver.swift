@@ -7,7 +7,7 @@ import Foundation
 /// encoded workspace name by naively turning `-` into `/` can spell a path that does not exist.
 /// This resolver uses the **authoritative** `encoded` directory name (from the written JSONL path),
 /// enumerates every absolute path that re-encodes to it, and picks one that exists on disk.
-package enum ClaudeResumeProjectPathResolver {
+package enum ProjectPathResolver {
     /// Same encoding as ``ClaudeCodeMigrator/encodedProjectPath(for:)``.
     package static func encodedClaudeProjectPath(_ absolutePath: String) -> String {
         MigratorUtils.encodedClaudeProjectPath(absolutePath)

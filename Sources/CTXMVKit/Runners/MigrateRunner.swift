@@ -93,7 +93,7 @@ package struct MigrateRunner {
         let resolvedProjectPath = resolveProjectPath(projectPath)
         let cwdForHint: String? = switch target {
         case .claudeCode:
-            ClaudeResumeProjectPathResolver.cdPath(
+            ProjectPathResolver.cdPath(
                 forStoredProjectPath: resolvedProjectPath,
                 writtenJSONLPath: path,
                 fileSystem: fileSystem
@@ -149,7 +149,7 @@ package struct MigrateRunner {
             return projectPath
         }
         let encoded = MigratorUtils.encodedClaudeProjectPath(projectPath)
-        let candidates = ClaudeResumeProjectPathResolver.existingDirectoryCandidates(
+        let candidates = ProjectPathResolver.existingDirectoryCandidates(
             encoded: encoded,
             fileSystem: fileSystem
         )
