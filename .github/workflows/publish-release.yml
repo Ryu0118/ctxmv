@@ -15,7 +15,6 @@ permissions:
   contents: write
 
 jobs:
-  # Semver + tag checks only (no Version.swift change, no push).
   preflight:
     runs-on: ubuntu-latest
     steps:
@@ -39,48 +38,21 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
 
-  prepare:
-    needs: preflight
-    runs-on: ubuntu-latest
-    outputs:
-      commit_sha: ${{ steps.push.outputs.sha }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Bump Version.swift
-        run: |
-          sed -i "s/static let current = \".*\"/static let current = \"$VERSION\"/" \
-            Sources/CTXMVCLI/Version.swift
-          cat Sources/CTXMVCLI/Version.swift
-        env:
-          VERSION: ${{ inputs.version }}
-
-      - name: Commit and push
-        id: push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Sources/CTXMVCLI/Version.swift
-          if git diff --cached --quiet; then
-            echo "Version.swift already at $VERSION, skipping commit"
-          else
-            git commit -m "chore: bump version to $VERSION"
-            git push origin main
-          fi
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-        env:
-          VERSION: ${{ inputs.version }}
-
   build-macos:
-    needs: prepare
+    needs: preflight
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.prepare.outputs.commit_sha }}
 
       - name: Select Xcode 26.2
         run: sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer
+
+      - name: Bump Version.swift (build-time only)
+        run: |
+          sed -i '' "s/static let current = \".*\"/static let current = \"$VERSION\"/" \
+            Sources/CTXMVCLI/Version.swift
+        env:
+          VERSION: ${{ inputs.version }}
 
       - name: Build Universal Binary
         run: xcrun swift build -c release --arch arm64 --arch x86_64
@@ -110,7 +82,7 @@ jobs:
           if-no-files-found: error
 
   build-linux:
-    needs: prepare
+    needs: preflight
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -121,8 +93,6 @@ jobs:
             arch: arm64
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.prepare.outputs.commit_sha }}
 
       - name: Install Swift (setup-swift)
         if: matrix.arch == 'x86_64'
@@ -146,6 +116,13 @@ jobs:
       - name: Install dependencies
         if: matrix.arch == 'x86_64'
         run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Bump Version.swift (build-time only)
+        run: |
+          sed -i "s/static let current = \".*\"/static let current = \"$VERSION\"/" \
+            Sources/CTXMVCLI/Version.swift
+        env:
+          VERSION: ${{ inputs.version }}
 
       - name: Build Linux Binary
         run: swift build -c release --static-swift-stdlib
@@ -175,15 +152,47 @@ jobs:
           path: .build/release/ctxmv
           if-no-files-found: error
 
+  # Version bump + push only after all builds succeed.
+  commit-version:
+    needs: [build-macos, build-linux]
+    runs-on: ubuntu-latest
+    outputs:
+      commit_sha: ${{ steps.push.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Bump Version.swift
+        run: |
+          sed -i "s/static let current = \".*\"/static let current = \"$VERSION\"/" \
+            Sources/CTXMVCLI/Version.swift
+        env:
+          VERSION: ${{ inputs.version }}
+
+      - name: Commit and push
+        id: push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Sources/CTXMVCLI/Version.swift
+          if git diff --cached --quiet; then
+            echo "Version.swift already at $VERSION, skipping commit"
+          else
+            git commit -m "chore: bump version to $VERSION"
+            git push origin main
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        env:
+          VERSION: ${{ inputs.version }}
+
   create-release:
-    needs: [prepare, build-macos, build-linux]
+    needs: [commit-version, build-macos, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ needs.prepare.outputs.commit_sha }}
+          ref: ${{ needs.commit-version.outputs.commit_sha }}
 
       - name: Download all release archives
         uses: actions/download-artifact@v6
@@ -265,5 +274,5 @@ jobs:
             --generate-notes
         env:
           VERSION: ${{ inputs.version }}
-          TARGET_SHA: ${{ needs.prepare.outputs.commit_sha }}
+          TARGET_SHA: ${{ needs.commit-version.outputs.commit_sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
