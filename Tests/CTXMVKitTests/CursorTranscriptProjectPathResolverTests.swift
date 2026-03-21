@@ -8,13 +8,16 @@ struct CursorTranscriptProjectPathResolverTests {
     func resolvesWorkingDirectory() {
         let fileSystem = MockFileManager()
         let projectPath = "/Users/tester/workspaces/sample-project"
-        let transcriptFile = URL(fileURLWithPath: "/Users/tester/.cursor/projects/workspace/agent-transcripts/session.jsonl")
+        let transcriptPath =
+            "/Users/tester/.cursor/projects/workspace/agent-transcripts/session.jsonl"
+        let transcriptFile = URL(fileURLWithPath: transcriptPath)
         let resolver = CursorTranscriptProjectPathResolver(fileSystem: fileSystem)
 
         fileSystem.directories[projectPath] = []
-        fileSystem.files[transcriptFile.path] = #"""
+        let json = #"""
         {"role":"assistant","message":{"content":[{"type":"tool_use","name":"Shell","input":{"command":"swift test","working_directory":"\#(projectPath)"}}]}}
-        """#.data(using: .utf8)!
+        """#
+        fileSystem.files[transcriptFile.path] = Data(json.utf8)
 
         #expect(resolver.resolveProjectPath(for: transcriptFile) == projectPath)
     }
@@ -23,12 +26,14 @@ struct CursorTranscriptProjectPathResolverTests {
     func fallsBackToWorkspacePath() {
         let fileSystem = MockFileManager()
         let workspacePath = "/Users/tester/workspaces/library/example"
-        let transcriptFile = URL(fileURLWithPath: "/Users/tester/.cursor/projects/Users-tester-workspaces-library-example/agent-transcripts/session/session.jsonl")
+        let transcriptPath =
+            "/Users/tester/.cursor/projects/Users-tester-workspaces-library-example/agent-transcripts/session/session.jsonl"
+        let transcriptFile = URL(fileURLWithPath: transcriptPath)
         let resolver = CursorTranscriptProjectPathResolver(fileSystem: fileSystem)
 
-        fileSystem.files[transcriptFile.path] = #"""
-        {"role":"assistant","message":{"content":[{"type":"tool_use","name":"ReadFile","input":{"path":"\#(workspacePath)/Package.swift"}}]}}
-        """#.data(using: .utf8)!
+        let json = #"{"role":"assistant","message":{"content":[{"type":"tool_use","name":"ReadFile","input":{"path":"\#(workspacePath)"#
+            + #"/Package.swift"}}]}}"#
+        fileSystem.files[transcriptFile.path] = Data(json.utf8)
 
         #expect(resolver.resolveProjectPath(for: transcriptFile) == workspacePath)
     }
@@ -38,13 +43,16 @@ struct CursorTranscriptProjectPathResolverTests {
         let fileSystem = MockFileManager()
         let standardizedPath = "/Users/tester/workspaces/sample-project"
         let nonStandardizedPath = "/Users/tester/workspaces/tmp/../sample-project"
-        let transcriptFile = URL(fileURLWithPath: "/Users/tester/.cursor/projects/workspace/agent-transcripts/session.jsonl")
+        let transcriptPath =
+            "/Users/tester/.cursor/projects/workspace/agent-transcripts/session.jsonl"
+        let transcriptFile = URL(fileURLWithPath: transcriptPath)
         let resolver = CursorTranscriptProjectPathResolver(fileSystem: fileSystem)
 
         fileSystem.directories[standardizedPath] = []
-        fileSystem.files[transcriptFile.path] = #"""
+        let json = #"""
         {"role":"assistant","message":{"content":[{"type":"tool_use","name":"Shell","input":{"command":"swift test","working_directory":"\#(nonStandardizedPath)"}}]}}
-        """#.data(using: .utf8)!
+        """#
+        fileSystem.files[transcriptFile.path] = Data(json.utf8)
 
         #expect(resolver.resolveProjectPath(for: transcriptFile) == standardizedPath)
     }

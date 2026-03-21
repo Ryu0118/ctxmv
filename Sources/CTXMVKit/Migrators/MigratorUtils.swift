@@ -18,7 +18,7 @@ enum MigratorUtils {
         data.map { String(format: "%02x", $0) }.joined()
     }
 
-    static func encodeLine<T: Encodable>(_ value: T) -> String? {
+    static func encodeLine(_ value: some Encodable) -> String? {
         guard let data = try? jsonEncoder.encode(value),
               let encodedLine = String(data: data, encoding: .utf8) else { return nil }
         return encodedLine

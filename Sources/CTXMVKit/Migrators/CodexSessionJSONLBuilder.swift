@@ -33,10 +33,12 @@ struct CodexSessionJSONLBuilder: Sendable {
 
     private func makeMigrationMetadata(context: BuildContext) -> MigrationMeta {
         MigrationDeduplicator.makeMeta(
-            originId: context.conversation.id,
-            originSource: context.conversation.source,
-            originMessageCount: context.conversation.messages.count,
-            originDigest: context.originDigest
+            origin: MigrationOrigin(
+                originId: context.conversation.id,
+                originSource: context.conversation.source,
+                originMessageCount: context.conversation.messages.count,
+                originDigest: context.originDigest
+            )
         )
     }
 

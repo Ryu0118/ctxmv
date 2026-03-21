@@ -23,7 +23,11 @@ struct DecodeProjectPathTests {
         var testDescription: String { description }
 
         static let allCases: [TestCase] = [
-            TestCase(description: "standard encoded path", input: "-Users-example-workspace-foo", expected: "/Users/example/workspace/foo"),
+            TestCase(
+                description: "standard encoded path",
+                input: "-Users-example-workspace-foo",
+                expected: "/Users/example/workspace/foo"
+            ),
             TestCase(description: "single component", input: "-tmp", expected: "/tmp"),
             TestCase(description: "deep path", input: "-a-b-c-d-e", expected: "/a/b/c/d/e"),
             TestCase(description: "no leading dash returns nil", input: "Users-example", expected: nil),
@@ -95,7 +99,8 @@ struct ClaudeCodeContentTests {
             ),
             TestCase(
                 description: "array content with text blocks",
-                jsonl: #"{"type":"assistant","message":{"content":[{"type":"text","text":"Part 1"},{"type":"tool_use"},{"type":"text","text":"Part 2"}]}}"#,
+                jsonl: #"{"type":"assistant","message":{"content":[{"type":"text","text":"Part 1"},{"type":"tool_use"},{"type":"text","text":"Part 2"}"#
+                + #"]}}"#,
                 expected: "Part 1\nPart 2"
             ),
             TestCase(
@@ -130,9 +135,17 @@ struct ClaudeCodeSkipTests {
 
         static let allCases: [TestCase] = [
             TestCase(description: "progress → skip", jsonl: #"{"type":"progress"}"#, expected: true),
-            TestCase(description: "file-history-snapshot → skip", jsonl: #"{"type":"file-history-snapshot"}"#, expected: true),
+            TestCase(
+                description: "file-history-snapshot → skip",
+                jsonl: #"{"type":"file-history-snapshot"}"#,
+                expected: true
+            ),
             TestCase(description: "user → keep", jsonl: #"{"type":"user"}"#, expected: false),
-            TestCase(description: "assistant → keep", jsonl: #"{"type":"assistant","message":{"role":"assistant"}}"#, expected: false),
+            TestCase(
+                description: "assistant → keep",
+                jsonl: #"{"type":"assistant","message":{"role":"assistant"}}"#,
+                expected: false
+            ),
         ]
     }
 
@@ -202,7 +215,11 @@ struct ClaudeCodeSessionTests {
         let messages = conversation.messages
         #expect(messages.count == 4)
         #expect(messages[0] == .init(role: .user, content: "Hello world", timestamp: messages[0].timestamp))
-        #expect(messages[1] == .init(role: .assistant, content: "Hi! How can I help?", timestamp: messages[1].timestamp))
+        #expect(messages[1] == .init(
+            role: .assistant,
+            content: "Hi! How can I help?",
+            timestamp: messages[1].timestamp
+        ))
         #expect(messages[2] == .init(role: .user, content: "Thanks", timestamp: messages[2].timestamp))
         #expect(messages[3] == .init(role: .assistant, content: "You're welcome!", timestamp: messages[3].timestamp))
     }

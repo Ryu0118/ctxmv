@@ -178,7 +178,7 @@ enum TestFixtures {
             #"{"role":"user","timestamp":"\#(timestamp)","message":{"content":[{"type":"text","text":"\#(wrappedUserQuery)"}]}}"#,
             #"{"role":"assistant","timestamp":"\#(timestamp)","message":{"content":[{"type":"text","text":"Inspecting project files"},{"type":"tool_use","name":"ReadFile","input":{"path":"\#(filePath)"}},{"type":"tool_use","name":"Shell","input":{"command":"pnpm test","working_directory":"\#(projectPath)"}}]}}"#,
             #"{"role":"assistant","timestamp":"\#(timestamp)","message":{"content":[{"type":"text","text":"Hi from transcript"}]}}"#,
-        ].compactMap { $0 }
+        ].compactMap(\.self)
 
         return lines.joined(separator: "\n")
     }

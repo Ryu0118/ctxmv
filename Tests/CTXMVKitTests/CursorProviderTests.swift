@@ -12,47 +12,51 @@ struct CursorBlobTests {
 
         var testDescription: String { description }
 
+        // swiftlint:disable:next line_length
+        private static let multiBlockAssistantJSON =
+            #"{"role":"assistant","content":[{"type":"text","text":"Line 1"},{"type":"tool_use","name":"bash"},{"type":"text","text":"Line 2"}]}"#
+
         static let allCases: [TestCase] = [
             TestCase(
                 description: "raw JSON user message",
-                data: #"{"role":"user","content":[{"type":"text","text":"Hello from cursor"}]}"#.data(using: .utf8)!,
+                data: Data(#"{"role":"user","content":[{"type":"text","text":"Hello from cursor"}]}"#.utf8),
                 expectedRole: .user,
                 expectedContent: "Hello from cursor"
             ),
             TestCase(
                 description: "raw JSON assistant message",
-                data: #"{"role":"assistant","content":[{"type":"text","text":"Here is the answer"}]}"#.data(using: .utf8)!,
+                data: Data(#"{"role":"assistant","content":[{"type":"text","text":"Here is the answer"}]}"#.utf8),
                 expectedRole: .assistant,
                 expectedContent: "Here is the answer"
             ),
             TestCase(
                 description: "raw JSON multiple text blocks",
-                data: #"{"role":"assistant","content":[{"type":"text","text":"Line 1"},{"type":"tool_use","name":"bash"},{"type":"text","text":"Line 2"}]}"#.data(using: .utf8)!,
+                data: Data(Self.multiBlockAssistantJSON.utf8),
                 expectedRole: .assistant,
                 expectedContent: "Line 1\nLine 2"
             ),
             TestCase(
                 description: "raw JSON tool role → skip",
-                data: #"{"role":"tool","content":[{"type":"tool-result","text":"ok"}]}"#.data(using: .utf8)!,
+                data: Data(#"{"role":"tool","content":[{"type":"tool-result","text":"ok"}]}"#.utf8),
                 expectedRole: nil,
                 expectedContent: nil
             ),
             TestCase(
                 description: "raw JSON system role → skip",
-                data: #"{"role":"system","content":[{"type":"text","text":"system prompt"}]}"#.data(using: .utf8)!,
+                data: Data(#"{"role":"system","content":[{"type":"text","text":"system prompt"}]}"#.utf8),
                 expectedRole: nil,
                 expectedContent: nil
             ),
             TestCase(
                 description: "raw JSON no text blocks → skip",
-                data: #"{"role":"assistant","content":[{"type":"tool_use","name":"bash"}]}"#.data(using: .utf8)!,
+                data: Data(#"{"role":"assistant","content":[{"type":"tool_use","name":"bash"}]}"#.utf8),
                 expectedRole: nil,
                 expectedContent: nil
             ),
             TestCase(
                 description: "protobuf-wrapped assistant message",
                 data: Data([0x0A, 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0x22, 0xFF])
-                    + #"{"id":"1","role":"assistant","content":[{"type":"text","text":"Protobuf answer"}]}"#.data(using: .utf8)!
+                    + Data(#"{"id":"1","role":"assistant","content":[{"type":"text","text":"Protobuf answer"}]}"#.utf8)
                     + Data([0x00, 0x01, 0x02]),
                 expectedRole: .assistant,
                 expectedContent: "Protobuf answer"
@@ -87,7 +91,7 @@ struct CursorDedupTests {
     func dedup() throws {
         let sqlite = MockSQLiteReader()
 
-        let rawJSON = #"{"role":"user","content":[{"type":"text","text":"Hello"}]}"#.data(using: .utf8)!
+        let rawJSON = Data(#"{"role":"user","content":[{"type":"text","text":"Hello"}]}"#.utf8)
         var protobuf = Data([0x0A, 0x22, 0x33])
         protobuf.append(rawJSON)
         let metadataJSON = #"{"agentId":"test","name":"Test","createdAt":1710000000000,"lastUsedModel":"gpt-4"}"#
@@ -125,7 +129,7 @@ struct HexDecodeTests {
         var testDescription: String { description }
 
         static let allCases: [TestCase] = [
-            TestCase(description: "valid ASCII hex", input: "48656c6c6f", expected: "Hello".data(using: .utf8)),
+            TestCase(description: "valid ASCII hex", input: "48656c6c6f", expected: Data("Hello".utf8)),
             TestCase(description: "empty string", input: "", expected: Data()),
             TestCase(description: "invalid hex chars", input: "ZZZZ", expected: nil),
             TestCase(description: "odd length hex", input: "ABC", expected: nil),
@@ -158,12 +162,13 @@ struct CursorSessionTests {
         mutating func configureLegacyTranscriptSession() -> URL {
             let workspace = projectsRoot.appendingPathComponent("Users-tester-workspaces-library-example")
             let transcriptDirectory = workspace.appendingPathComponent("agent-transcripts")
-            let transcriptFile = transcriptDirectory.appendingPathComponent("87245085-1456-4f87-a575-4a85b759cd1d.jsonl")
+            let transcriptFile = transcriptDirectory
+                .appendingPathComponent("87245085-1456-4f87-a575-4a85b759cd1d.jsonl")
 
             fileSystem.directories[projectsRoot.path] = [workspace]
             fileSystem.directories[workspace.path] = [transcriptDirectory]
             fileSystem.directories[transcriptDirectory.path] = [transcriptFile]
-            fileSystem.files[transcriptFile.path] = TestFixtures.cursorTranscriptJSONL().data(using: .utf8)!
+            fileSystem.files[transcriptFile.path] = Data(TestFixtures.cursorTranscriptJSONL().utf8)
 
             return transcriptFile
         }
@@ -186,16 +191,17 @@ struct CursorSessionTests {
                 packageJSON.deletingLastPathComponent(),
                 sourceFile.deletingLastPathComponent(),
             ]
-            fileSystem.directories[URL(fileURLWithPath: genericProjectPath).appendingPathComponent("src").path] = [sourceFile]
+            fileSystem
+                .directories[URL(fileURLWithPath: genericProjectPath).appendingPathComponent("src").path] = [sourceFile]
 
             fileSystem.files[helperSkillFile.path] = Data("skill".utf8)
             fileSystem.files[packageJSON.path] = Data("{}".utf8)
             fileSystem.files[sourceFile.path] = Data("export {}".utf8)
-            fileSystem.files[transcriptFile.path] = TestFixtures.cursorTranscriptJSONLWithProjectHints(
+            fileSystem.files[transcriptFile.path] = Data(TestFixtures.cursorTranscriptJSONLWithProjectHints(
                 projectPath: genericProjectPath,
                 filePath: sourceFile.path,
                 preludePath: helperSkillFile.path
-            ).data(using: .utf8)!
+            ).utf8)
 
             return transcriptFile
         }
@@ -284,16 +290,17 @@ struct CursorSessionTests {
         let sqlite = MockSQLiteReader()
         sqlite.queryResults = [[
             "key": "composerData",
-            "value": "7b226167656e744964223a22637572736f722d73657373696f6e222c226e616d65223a2254657374222c22637265617465644174223a313731303030303030303030302c226c617374557365644d6f64656c223a226770742d34227d",
+            "value": "7b226167656e744964223a22637572736f722d73657373696f6e222c226e616d65223a2254657374222c2263726561746564"
+                + "4174223a313731303030303030303030302c226c617374557365644d6f64656c223a226770742d34227d",
         ]]
         sqlite.recentBlobResults = [
             (
                 id: "blob-last-user",
-                data: #"{"role":"user","content":[{"type":"text","text":"latest question"}]}"#.data(using: .utf8)!
+                data: Data(#"{"role":"user","content":[{"type":"text","text":"latest question"}]}"#.utf8)
             ),
             (
                 id: "blob-last-assistant",
-                data: #"{"role":"assistant","content":[{"type":"text","text":"latest answer"}]}"#.data(using: .utf8)!
+                data: Data(#"{"role":"assistant","content":[{"type":"text","text":"latest answer"}]}"#.utf8)
             ),
         ]
 
@@ -306,7 +313,11 @@ struct CursorSessionTests {
             sqlite: sqlite,
             baseDir: URL(fileURLWithPath: "/nonexistent")
         )
-        let conversation = try #require(try await reader.loadSession(id: "cursor-session", storagePath: dbPath, limit: 2))
+        let conversation = try #require(try await reader.loadSession(
+            id: "cursor-session",
+            storagePath: dbPath,
+            limit: 2
+        ))
 
         #expect(sqlite.lastRecentBlobLimit == 800)
         #expect(conversation.messages.count == 2)
@@ -323,12 +334,13 @@ struct CursorSessionTests {
         let sqlite = MockSQLiteReader()
         sqlite.queryResults = [[
             "key": "composerData",
-            "value": "7b226167656e744964223a2263396630356437352d623935382d343263662d393332622d623038316138323239313734222c226e616d65223a2254657374222c22637265617465644174223a313731303030303030303030302c226c617374557365644d6f64656c223a226770742d34227d",
+            "value": "7b226167656e744964223a2263396630356437352d623935382d343263662d393332622d623038316138323239313734222c"
+                + "226e616d65223a2254657374222c22637265617465644174223a313731303030303030303030302c226c617374557365644d6f64656c223a226770742d34227d",
         ]]
         sqlite.blobResults = [
             (
                 id: "blob1",
-                data: #"{"role":"user","content":[{"type":"text","text":"where am i working?"}]}"#.data(using: .utf8)!
+                data: Data(#"{"role":"user","content":[{"type":"text","text":"where am i working?"}]}"#.utf8)
             ),
         ]
 

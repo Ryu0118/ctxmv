@@ -3,14 +3,12 @@ import Logging
 import Rainbow
 
 package extension Logger.MetadataValue {
-    /// Stores a `Rainbow` color in logger metadata using its raw ANSI code.
     static func color(_ color: NamedColor) -> Self {
         .stringConvertible(color.rawValue)
     }
 }
 
 package extension Logger.Metadata {
-    /// Namespaces the log color under the single metadata key understood by `ColorLogHandler`.
     static func color(_ color: NamedColor) -> Self { ["color": .color(color)] }
 }
 
@@ -26,6 +24,7 @@ package struct ColorLogHandler: LogHandler, Sendable {
         set { metadata[key] = newValue }
     }
 
+    // swiftlint:disable:next function_parameter_count
     package func log(
         level _: Logger.Level,
         message: Logger.Message,
@@ -35,17 +34,14 @@ package struct ColorLogHandler: LogHandler, Sendable {
         function _: String,
         line _: UInt
     ) {
-        let color: NamedColor?
-        if let metadata,
-           let rawColorString = metadata["color"],
-           let colorCode = UInt8(rawColorString.description),
-           let namedColor = NamedColor(rawValue: colorCode)
+        let color: NamedColor? = if let metadata,
+                                    let rawColorString = metadata["color"],
+                                    let colorCode = UInt8(rawColorString.description),
+                                    let namedColor = NamedColor(rawValue: colorCode)
         {
-            // Logging metadata is stringly typed, so decode the stored ANSI value
-            // back into Rainbow's enum before rendering.
-            color = namedColor
+            namedColor
         } else {
-            color = nil
+            nil
         }
 
         let renderedMessage = if let color {
@@ -58,7 +54,6 @@ package struct ColorLogHandler: LogHandler, Sendable {
 }
 
 public extension LoggingSystem {
-    /// Boots the global logging system with ctxmv's colored stdout handler.
     static func bootstrap(logLevel: Logger.Level) {
         bootstrap { _ in
             var handler = ColorLogHandler(label: "ctxmv")
