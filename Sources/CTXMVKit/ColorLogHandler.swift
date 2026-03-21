@@ -14,17 +14,6 @@ package extension Logger.Metadata {
     static func color(_ color: NamedColor) -> Self { ["color": .color(color)] }
 }
 
-/// Thread-safe wrapper around C stdout for immediate flushing.
-private enum StdoutWriter: Sendable {
-    nonisolated(unsafe) private static let stream = fdopen(STDOUT_FILENO, "w")!
-
-    static func writeLine(_ message: String) {
-        fputs(message, stream)
-        fputs("\n", stream)
-        fflush(stream)
-    }
-}
-
 /// Writes colored log messages to standard output.
 package struct ColorLogHandler: LogHandler, Sendable {
     package var metadata: Logger.Metadata = [:]
@@ -64,11 +53,7 @@ package struct ColorLogHandler: LogHandler, Sendable {
         } else {
             message.description
         }
-        writeLine(renderedMessage)
-    }
-
-    private func writeLine(_ message: String) {
-        StdoutWriter.writeLine(message)
+        print(renderedMessage)
     }
 }
 
