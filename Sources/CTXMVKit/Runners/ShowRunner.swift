@@ -94,13 +94,18 @@ package struct ShowRunner: Sendable {
     }
 
     private func listSessions(from candidateReaders: [any SessionReader]) async throws -> [SessionSummary] {
-        var all: [SessionSummary] = []
-        for reader in candidateReaders {
-            if let sessions = try? await reader.listSessions() {
-                all.append(contentsOf: sessions)
+        await withTaskGroup(of: [SessionSummary].self, returning: [SessionSummary].self) { group in
+            for reader in candidateReaders {
+                group.addTask {
+                    await (try? reader.listSessions()) ?? []
+                }
             }
-        }
-        return all.sorted { $0.createdAt > $1.createdAt }
+            var all: [SessionSummary] = []
+            for await batch in group {
+                all.append(contentsOf: batch)
+            }
+            return all
+        }.sorted { $0.createdAt > $1.createdAt }
     }
 
     private func filteredReaders() -> [any SessionReader] {
@@ -149,17 +154,31 @@ package struct ShowRunner: Sendable {
 
     private func loadFallbackSession(using candidateReaders: [any SessionReader]) async throws -> LocatedSession? {
         let fallbackLimit = resolvedMessageLimit(for: nil)
-        for reader in candidateReaders {
-            if let conversation = try? await reader.loadSession(id: sessionID, limit: fallbackLimit) {
-                logger.info("🔍 Found session via exact fallback source=\(conversation.source.rawValue)")
-                return makeLocatedSession(
-                    conversation: conversation,
-                    summary: nil,
-                    appliedMessageLimit: fallbackLimit
-                )
+        let located: LocatedSession? = await withTaskGroup(of: LocatedSession?.self) { group in
+            for reader in candidateReaders {
+                group.addTask { [self] in
+                    guard let conversation = try? await reader.loadSession(id: sessionID, limit: fallbackLimit) else {
+                        return nil
+                    }
+                    return makeLocatedSession(
+                        conversation: conversation,
+                        summary: nil,
+                        appliedMessageLimit: fallbackLimit
+                    )
+                }
             }
+            for await result in group {
+                if let result {
+                    group.cancelAll()
+                    return result
+                }
+            }
+            return nil
         }
-        return nil
+        if let located {
+            logger.info("🔍 Found session via exact fallback source=\(located.conversation.source.rawValue)")
+        }
+        return located
     }
 
     private func makeLocatedSession(

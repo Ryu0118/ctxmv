@@ -6,17 +6,22 @@ import Rainbow
 package struct MigrateRunner: Sendable {
     private let sessionID: String
     private let target: AgentSource
+    private let source: AgentSource?
 
     private let readers: [any SessionReader]
+    private let fileSystem: any FileSystemProtocol
 
     package init(
         sessionID: String,
         target: AgentSource,
+        source: AgentSource? = nil,
         fileSystem: any FileSystemProtocol = DefaultFileSystem(),
         sqlite: any SQLiteReader = DefaultSQLiteReader()
     ) {
         self.sessionID = sessionID
         self.target = target
+        self.source = source
+        self.fileSystem = fileSystem
         readers = SessionReaderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
     }
 
@@ -24,16 +29,21 @@ package struct MigrateRunner: Sendable {
     package init(
         sessionID: String,
         target: AgentSource,
-        readers: [any SessionReader]
+        source: AgentSource? = nil,
+        readers: [any SessionReader],
+        fileSystem: any FileSystemProtocol = DefaultFileSystem()
     ) {
         self.sessionID = sessionID
         self.target = target
+        self.source = source
         self.readers = readers
+        self.fileSystem = fileSystem
     }
 
     package func run() async throws {
         let showRunner = ShowRunner(
             sessionID: sessionID,
+            source: source,
             messageLimit: nil,
             largeSessionByteThreshold: nil,
             readers: readers
@@ -80,19 +90,34 @@ package struct MigrateRunner: Sendable {
     /// Prints the exact resume command, reusing the existing session path when migration was skipped as a duplicate.
     private func printResumeHint(path: String, sessionID: String, projectPath: String?, alreadyMigrated: Bool) {
         let resumeCommand = resumeCommand(forSessionID: sessionID)
-        let cwdLine = projectPath.map { "  cd \($0)\n" } ?? ""
+        let cwdForHint: String? = switch target {
+        case .claudeCode:
+            ClaudeResumeProjectPathResolver.cdPath(
+                forStoredProjectPath: projectPath,
+                writtenJSONLPath: path,
+                fileSystem: fileSystem
+            )
+        case .codex, .cursor:
+            projectPath
+        }
+        let cwdLine = cwdForHint.map { "  cd \($0)\n" } ?? ""
+        let claudeCwdNote = """
+        ⚠️ Claude Code resolves sessions by current working directory (~/.claude/projects/<encoded cwd>/).
+           Running `claude` from a different project folder will not find this session.
+
+        """
 
         if alreadyMigrated {
             logger.warning("""
             ⚠️ Already migrated to: \(path)
-
+            \(target == .claudeCode ? claudeCwdNote : "")
             To resume:
             \(cwdLine)  \(resumeCommand)
             """, metadata: .color(.yellow))
         } else {
             logger.info("""
             ✅ Session written to: \(path)
-
+            \(target == .claudeCode ? claudeCwdNote : "")
             To resume:
             \(cwdLine)  \(resumeCommand)
             """, metadata: .color(.green))

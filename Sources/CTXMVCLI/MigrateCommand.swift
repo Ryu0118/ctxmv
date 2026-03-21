@@ -15,13 +15,17 @@ struct MigrateCommand: AsyncParsableCommand {
     @Option(name: .customLong("to"), help: "Target agent: claude-code, codex, or cursor")
     var target: AgentSource
 
+    @Option(name: .customLong("from"), help: "Source agent: claude-code, codex, or cursor")
+    var source: AgentSource?
+
     @OptionGroup var options: GlobalOptions
 
     func run() async throws {
         if options.verbose { logger.logLevel = .debug }
         try await MigrateRunner(
             sessionID: sessionID,
-            target: target
+            target: target,
+            source: source
         ).run()
     }
 }
