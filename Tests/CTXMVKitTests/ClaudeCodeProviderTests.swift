@@ -71,12 +71,9 @@ struct ClaudeCodeRoleTests {
     }
 
     @Test("identifies message roles", arguments: TestCase.allCases)
-    func extractRole(_ testCase: TestCase) {
+    func extractRole(_ testCase: TestCase) throws {
         let reader = ClaudeCodeSessionReaderTestSupport.makeStatelessReader()
-        guard let entry = ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
-            #expect(testCase.expected == nil)
-            return
-        }
+        let entry = try #require(ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl))
         #expect(reader.extractRole(from: entry) == testCase.expected)
     }
 }
@@ -115,12 +112,9 @@ struct ClaudeCodeContentTests {
     }
 
     @Test("extracts text content", arguments: TestCase.allCases)
-    func extractContent(_ testCase: TestCase) {
+    func extractContent(_ testCase: TestCase) throws {
         let reader = ClaudeCodeSessionReaderTestSupport.makeStatelessReader()
-        guard let entry = ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
-            #expect(testCase.expected == "")
-            return
-        }
+        let entry = try #require(ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl))
         #expect(reader.extractContent(from: entry) == testCase.expected)
     }
 }
@@ -143,12 +137,9 @@ struct ClaudeCodeSkipTests {
     }
 
     @Test("filters non-message entry types", arguments: TestCase.allCases)
-    func shouldSkip(_ testCase: TestCase) {
+    func shouldSkip(_ testCase: TestCase) throws {
         let reader = ClaudeCodeSessionReaderTestSupport.makeStatelessReader()
-        guard let entry = ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
-            Issue.record("Failed to decode JSONL: \(testCase.jsonl)")
-            return
-        }
+        let entry = try #require(ClaudeCodeSessionReaderTestSupport.decodeEntry(testCase.jsonl))
         #expect(reader.shouldSkipEntry(entry) == testCase.expected)
     }
 }
@@ -207,10 +198,8 @@ struct ClaudeCodeSessionTests {
     func loadParsesMessages() async throws {
         var fixture = Fixture()
         fixture.configureSession()
-        let conversation = try await fixture.makeReader().loadSession(id: fixture.sessionID)
-
-        #expect(conversation != nil)
-        let messages = conversation!.messages
+        let conversation = try #require(try await fixture.makeReader().loadSession(id: fixture.sessionID))
+        let messages = conversation.messages
         #expect(messages.count == 4)
         #expect(messages[0] == .init(role: .user, content: "Hello world", timestamp: messages[0].timestamp))
         #expect(messages[1] == .init(role: .assistant, content: "Hi! How can I help?", timestamp: messages[1].timestamp))
@@ -222,10 +211,8 @@ struct ClaudeCodeSessionTests {
     func loadParsesMessagesWithLimit() async throws {
         var fixture = Fixture()
         fixture.configureSession()
-        let conversation = try await fixture.makeReader().loadSession(id: fixture.sessionID, limit: 2)
-
-        #expect(conversation != nil)
-        let messages = conversation!.messages
+        let conversation = try #require(try await fixture.makeReader().loadSession(id: fixture.sessionID, limit: 2))
+        let messages = conversation.messages
         #expect(messages.count == 2)
         #expect(messages[0].role == .user)
         #expect(messages[0].content == "Thanks")

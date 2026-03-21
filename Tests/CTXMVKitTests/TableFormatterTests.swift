@@ -85,39 +85,51 @@ struct ListRunnerRowValuesTests {
         #expect(values[5] == "hello world")
     }
 
-    @Test("uses lastMessageAt for date when available")
-    func lastMessageAtDate() {
-        let created = Date(timeIntervalSince1970: 1_710_000_000)
-        let lastMsg = Date(timeIntervalSince1970: 1_710_100_000)
-        let summary = SessionSummary(
-            id: "test-id-suffix12",
-            source: .claudeCode,
-            projectPath: nil,
-            createdAt: created,
-            lastMessageAt: lastMsg,
-            model: nil,
-            messageCount: 0,
-            lastUserMessage: nil
-        )
-        let values = ListRunner.rowValues(for: summary)
-        let dateStr = DateUtils.dateTimeShort.string(from: lastMsg)
-        #expect(values[3] == dateStr)
+    private struct DateColumnScenario: CustomTestStringConvertible, Sendable {
+        var testDescription: String { name }
+
+        let name: String
+        let source: AgentSource
+        let created: Date
+        let lastMessageAt: Date?
+        let expectedDateForColumn: Date
     }
 
-    @Test("falls back to createdAt when lastMessageAt is nil")
-    func fallbackToCreatedAt() {
+    private static let dateColumnScenarios: [DateColumnScenario] = {
         let created = Date(timeIntervalSince1970: 1_710_000_000)
+        let lastMsg = Date(timeIntervalSince1970: 1_710_100_000)
+        return [
+            DateColumnScenario(
+                name: "uses lastMessageAt for date when available",
+                source: .claudeCode,
+                created: created,
+                lastMessageAt: lastMsg,
+                expectedDateForColumn: lastMsg
+            ),
+            DateColumnScenario(
+                name: "falls back to createdAt when lastMessageAt is nil",
+                source: .cursor,
+                created: created,
+                lastMessageAt: nil,
+                expectedDateForColumn: created
+            ),
+        ]
+    }()
+
+    @Test("date column prefers lastMessageAt or createdAt", arguments: dateColumnScenarios)
+    private func listDateColumn(_ scenario: DateColumnScenario) {
         let summary = SessionSummary(
             id: "test-id-suffix12",
-            source: .cursor,
+            source: scenario.source,
             projectPath: nil,
-            createdAt: created,
+            createdAt: scenario.created,
+            lastMessageAt: scenario.lastMessageAt,
             model: nil,
             messageCount: 0,
             lastUserMessage: nil
         )
         let values = ListRunner.rowValues(for: summary)
-        let dateStr = DateUtils.dateTimeShort.string(from: created)
+        let dateStr = DateUtils.dateTimeShort.string(from: scenario.expectedDateForColumn)
         #expect(values[3] == dateStr)
     }
 

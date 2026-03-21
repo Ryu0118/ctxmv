@@ -103,9 +103,8 @@ struct CodexMigratorTests {
         let conversation = TestFixtures.makeConversation(id: "codex-migrate-write", source: .claudeCode)
 
         let result = try migrator.migrate(conversation)
-        guard case let .written(path, sessionId) = result else {
-            Issue.record("Expected written migration result")
-            return
+        let (path, sessionId) = switch result {
+        case let .written(path, sessionID): (path, sessionID)
         }
 
         let expectedDirectory = expectedSessionsDirectory(
@@ -116,10 +115,8 @@ struct CodexMigratorTests {
         #expect(path.hasSuffix("-\(sessionId).jsonl"))
         #expect(fileSystem.directories[expectedDirectory.path] != nil)
 
-        guard let data = fileSystem.files[path], let jsonl = String(data: data, encoding: .utf8) else {
-            Issue.record("Expected migrated JSONL to be written")
-            return
-        }
+        let data = try #require(fileSystem.files[path])
+        let jsonl = try #require(String(data: data, encoding: .utf8))
 
         #expect(jsonl.contains(#""type":"ctxmv_migration""#))
         #expect(jsonl.contains(#""type":"session_meta""#))
