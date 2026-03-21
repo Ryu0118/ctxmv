@@ -176,13 +176,6 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.commit_sha }}
 
-      - name: Create tag
-        run: |
-          git tag "$VERSION"
-          git push origin "$VERSION"
-        env:
-          VERSION: ${{ inputs.version }}
-
       - name: Download all release archives
         uses: actions/download-artifact@v6
         with:
@@ -258,8 +251,10 @@ jobs:
             /tmp/release-assets/* \
             "ctxmv-${VERSION}.artifactbundle.zip" \
             "ctxmv-${VERSION}.artifactbundle.zip.sha256" \
+            --target "$TARGET_SHA" \
             --title "$VERSION" \
             --generate-notes
         env:
           VERSION: ${{ inputs.version }}
+          TARGET_SHA: ${{ needs.prepare.outputs.commit_sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
