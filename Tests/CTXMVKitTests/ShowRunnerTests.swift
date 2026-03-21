@@ -31,85 +31,80 @@ struct ShowRunnerTests {
         }
     }
 
-    @Test("auto-limits large sessions by byte size")
-    func autoLimitsLargeSessions() async throws {
-        let summary = SessionSummary(
-            id: "session-large",
-            source: .claudeCode,
-            projectPath: "/tmp/project",
-            createdAt: TestFixtures.sampleDate,
-            model: nil,
-            messageCount: 0,
-            lastUserMessage: "Hello",
-            byteSize: 2_000_000
-        )
-        let reader = TrackingSessionReader(
-            source: .claudeCode,
-            summaries: [summary],
-            conversation: TestFixtures.makeConversation(id: "session-large")
-        )
+    /// Load-limit behavior when resolving from `SessionSummary` (auto cap vs explicit `messageLimit`).
+    private struct LoadLimitScenario: CustomTestStringConvertible, Sendable {
+        var testDescription: String { name }
 
-        let runner = ShowRunner(sessionID: "session-large", readers: [reader])
-        let conversation = try await runner.findSession()
-
-        #expect(conversation != nil)
-        #expect(reader.lastLoadLimit == 100)
+        let name: String
+        let byteSize: Int64
+        let messageLimit: Int?
+        let source: AgentSource
+        let sessionID: String
+        let summaryStoragePath: String?
+        let expectedLoadLimit: Int?
+        let expectedLoadedStoragePath: String?
     }
 
-    @Test("small sessions are loaded without truncation by default")
-    func smallSessionsLoadFully() async throws {
-        let summary = SessionSummary(
-            id: "session-small",
-            source: .codex,
-            projectPath: "/tmp/project",
-            createdAt: TestFixtures.sampleDate,
-            model: nil,
-            messageCount: 0,
-            lastUserMessage: "Hello",
-            byteSize: 128_000
-        )
-        let reader = TrackingSessionReader(
-            source: .codex,
-            summaries: [summary],
-            conversation: TestFixtures.makeConversation(id: "session-small", source: .codex)
-        )
-
-        let runner = ShowRunner(sessionID: "session-small", readers: [reader])
-        let conversation = try await runner.findSession()
-
-        #expect(conversation != nil)
-        #expect(reader.lastLoadLimit == nil)
-    }
-
-    @Test("explicit message limit overrides auto-limit policy")
-    func explicitLimitWins() async throws {
-        let summary = SessionSummary(
-            id: "session-explicit",
-            source: .cursor,
-            projectPath: "/tmp/project",
-            createdAt: TestFixtures.sampleDate,
-            model: nil,
-            messageCount: 0,
-            lastUserMessage: "Hello",
+    private static let loadLimitScenarios: [LoadLimitScenario] = [
+        LoadLimitScenario(
+            name: "auto-limits large sessions by byte size",
+            byteSize: 2_000_000,
+            messageLimit: nil,
+            source: .claudeCode,
+            sessionID: "session-large",
+            summaryStoragePath: nil,
+            expectedLoadLimit: 100,
+            expectedLoadedStoragePath: nil
+        ),
+        LoadLimitScenario(
+            name: "small sessions are loaded without truncation by default",
             byteSize: 128_000,
-            storagePath: "/tmp/store.db"
+            messageLimit: nil,
+            source: .codex,
+            sessionID: "session-small",
+            summaryStoragePath: nil,
+            expectedLoadLimit: nil,
+            expectedLoadedStoragePath: nil
+        ),
+        LoadLimitScenario(
+            name: "explicit message limit overrides auto-limit policy",
+            byteSize: 128_000,
+            messageLimit: 5,
+            source: .cursor,
+            sessionID: "session-explicit",
+            summaryStoragePath: "/tmp/store.db",
+            expectedLoadLimit: 5,
+            expectedLoadedStoragePath: "/tmp/store.db"
+        ),
+    ]
+
+    @Test("applies load-limit policy from summary and runner options", arguments: loadLimitScenarios)
+    private func loadLimitPolicy(_ scenario: LoadLimitScenario) async throws {
+        let summary = SessionSummary(
+            id: scenario.sessionID,
+            source: scenario.source,
+            projectPath: "/tmp/project",
+            createdAt: TestFixtures.sampleDate,
+            model: nil,
+            messageCount: 0,
+            lastUserMessage: "Hello",
+            byteSize: scenario.byteSize,
+            storagePath: scenario.summaryStoragePath
         )
         let reader = TrackingSessionReader(
-            source: .cursor,
+            source: scenario.source,
             summaries: [summary],
-            conversation: TestFixtures.makeConversation(id: "session-explicit", source: .cursor)
+            conversation: TestFixtures.makeConversation(id: scenario.sessionID, source: scenario.source)
         )
 
         let runner = ShowRunner(
-            sessionID: "session-explicit",
-            messageLimit: 5,
+            sessionID: scenario.sessionID,
+            messageLimit: scenario.messageLimit,
             readers: [reader]
         )
-        let conversation = try await runner.findSession()
-
-        #expect(conversation != nil)
-        #expect(reader.lastLoadLimit == 5)
-        #expect(reader.lastLoadedStoragePath == "/tmp/store.db")
+        _ = try #require(try await runner.findSession())
+        #expect(reader.lastLoadLimit == scenario.expectedLoadLimit)
+        #expect(reader.lastLoadedStoragePath == scenario.expectedLoadedStoragePath)
     }
 
     @Test("short id can resolve by listed suffix")
@@ -131,8 +126,7 @@ struct ShowRunnerTests {
         )
 
         let runner = ShowRunner(sessionID: "66667777", readers: [reader])
-        let conversation = try await runner.findSession()
-
-        #expect(conversation?.id == fullID)
+        let conversation = try #require(try await runner.findSession())
+        #expect(conversation.id == fullID)
     }
 }

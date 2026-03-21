@@ -57,12 +57,9 @@ struct CodexRoleTests {
     }
 
     @Test("identifies Codex message roles", arguments: TestCase.allCases)
-    func extractRole(_ testCase: TestCase) {
+    func extractRole(_ testCase: TestCase) throws {
         let reader = CodexSessionReaderTestSupport.makeStatelessReader()
-        guard let entry = CodexSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
-            Issue.record("Failed to decode JSONL: \(testCase.jsonl)")
-            return
-        }
+        let entry = try #require(CodexSessionReaderTestSupport.decodeEntry(testCase.jsonl))
         #expect(reader.extractRole(from: entry) == testCase.expected)
     }
 }
@@ -101,12 +98,9 @@ struct CodexContentTests {
     }
 
     @Test("extracts Codex message content", arguments: TestCase.allCases)
-    func extractContent(_ testCase: TestCase) {
+    func extractContent(_ testCase: TestCase) throws {
         let reader = CodexSessionReaderTestSupport.makeStatelessReader()
-        guard let entry = CodexSessionReaderTestSupport.decodeEntry(testCase.jsonl) else {
-            Issue.record("Failed to decode JSONL: \(testCase.jsonl)")
-            return
-        }
+        let entry = try #require(CodexSessionReaderTestSupport.decodeEntry(testCase.jsonl))
         #expect(reader.extractContent(from: entry) == testCase.expected)
     }
 }
@@ -201,10 +195,8 @@ struct CodexSessionTests {
     func loadParses() async throws {
         var fixture = Fixture()
         _ = fixture.configureRollout(named: "rollout-abc.jsonl")
-        let conversation = try await fixture.makeReader().loadSession(id: "codex-session-1")
-
-        #expect(conversation != nil)
-        let msgs = conversation!.messages
+        let conversation = try #require(try await fixture.makeReader().loadSession(id: "codex-session-1"))
+        let msgs = conversation.messages
         #expect(msgs.count == 4)
         #expect(msgs[0].role == .user)
         #expect(msgs[0].content == "Build a function")
@@ -220,10 +212,10 @@ struct CodexSessionTests {
     func loadParsesWithLimit() async throws {
         var fixture = Fixture()
         _ = fixture.configureRollout(named: "rollout-abc.jsonl")
-        let conversation = try await fixture.makeReader().loadSession(id: "codex-session-1", limit: 2)
-
-        #expect(conversation != nil)
-        let msgs = conversation!.messages
+        let conversation = try #require(
+            try await fixture.makeReader().loadSession(id: "codex-session-1", limit: 2)
+        )
+        let msgs = conversation.messages
         #expect(msgs.count == 2)
         #expect(msgs[0].role == .user)
         #expect(msgs[0].content == "Add tests")
@@ -247,13 +239,13 @@ struct CodexSessionTests {
         ).data(using: .utf8)!
 
         let reader = CodexSessionReader(fileSystem: fileSystem, baseDir: base)
-        let conversation = try await reader.loadSession(
-            id: "4248e42d-6278-4e38-913b-f7a3ae075812"
+        let conversation = try #require(
+            try await reader.loadSession(
+                id: "4248e42d-6278-4e38-913b-f7a3ae075812"
+            )
         )
-
-        #expect(conversation != nil)
-        #expect(conversation?.id == "4248e42d-6278-4e38-913b-f7a3ae075812")
-        #expect(conversation?.messages.first?.role == .user)
+        #expect(conversation.id == "4248e42d-6278-4e38-913b-f7a3ae075812")
+        #expect(conversation.messages.first?.role == .user)
     }
 
     @Test("loadSession returns nil for unknown ID")

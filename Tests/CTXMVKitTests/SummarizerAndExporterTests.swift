@@ -26,12 +26,12 @@ struct JSONLParserTests {
     }
 
     @Test("decodes JSONL lines", arguments: TestCase.allCases)
-    func decodeLine(_ testCase: TestCase) {
+    func decodeLine(_ testCase: TestCase) throws {
         let result = JSONLParser.decodeLine(testCase.input, as: SimpleEntry.self)
         if testCase.isValid {
-            #expect(result != nil)
-            #expect(result?.type == "user")
-            #expect(result?.message == "hello")
+            let entry = try #require(result)
+            #expect(entry.type == "user")
+            #expect(entry.message == "hello")
         } else {
             #expect(result == nil)
         }
@@ -56,10 +56,10 @@ struct DateUtilsTests {
     }
 
     @Test("parses ISO 8601 dates", arguments: TestCase.allCases)
-    func parseISO8601(_ testCase: TestCase) {
+    func parseISO8601(_ testCase: TestCase) throws {
         let result = DateUtils.parseISO8601(testCase.input)
         if testCase.isValid {
-            #expect(result != nil)
+            _ = try #require(result)
         } else {
             #expect(result == nil)
         }

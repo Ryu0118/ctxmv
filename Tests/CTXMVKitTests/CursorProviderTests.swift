@@ -238,16 +238,16 @@ struct CursorSessionTests {
         var fixture = Fixture()
         _ = fixture.configureLegacyTranscriptSession()
 
-        let conversation = try await fixture.makeReader()
-            .loadSession(id: "87245085-1456-4f87-a575-4a85b759cd1d")
-
-        #expect(conversation != nil)
-        #expect(conversation?.source == .cursor)
-        #expect(conversation?.messages.count == 2)
-        #expect(conversation?.messages[0].role == .user)
-        #expect(conversation?.messages[0].content == "Hello from transcript")
-        #expect(conversation?.messages[1].role == .assistant)
-        #expect(conversation?.projectPath == fixture.legacyProjectPath)
+        let conversation = try #require(
+            try await fixture.makeReader()
+                .loadSession(id: "87245085-1456-4f87-a575-4a85b759cd1d")
+        )
+        #expect(conversation.source == .cursor)
+        #expect(conversation.messages.count == 2)
+        #expect(conversation.messages[0].role == .user)
+        #expect(conversation.messages[0].content == "Hello from transcript")
+        #expect(conversation.messages[1].role == .assistant)
+        #expect(conversation.projectPath == fixture.legacyProjectPath)
     }
 
     @Test("loadSession falls back to nested agent-transcripts layout when store.db is unavailable")
@@ -256,13 +256,13 @@ struct CursorSessionTests {
         _ = fixture.configureNestedTranscriptSession()
         _ = fixture.configureUnreadableStoreDB()
 
-        let conversation = try await fixture.makeReader()
-            .loadSession(id: fixture.sessionID)
-
-        #expect(conversation != nil)
-        #expect(conversation?.source == .cursor)
-        #expect(conversation?.messages.count == 4)
-        #expect(conversation?.projectPath == fixture.genericProjectPath)
+        let conversation = try #require(
+            try await fixture.makeReader()
+                .loadSession(id: fixture.sessionID)
+        )
+        #expect(conversation.source == .cursor)
+        #expect(conversation.messages.count == 4)
+        #expect(conversation.projectPath == fixture.genericProjectPath)
     }
 
     @Test("loadSession limit truncates transcript messages to the latest entries")
@@ -270,13 +270,13 @@ struct CursorSessionTests {
         var fixture = Fixture()
         _ = fixture.configureLegacyTranscriptSession()
 
-        let conversation = try await fixture.makeReader()
-            .loadSession(id: "87245085-1456-4f87-a575-4a85b759cd1d", limit: 1)
-
-        #expect(conversation != nil)
-        #expect(conversation?.messages.count == 1)
-        #expect(conversation?.messages[0].role == .assistant)
-        #expect(conversation?.messages[0].content == "Hi from transcript")
+        let conversation = try #require(
+            try await fixture.makeReader()
+                .loadSession(id: "87245085-1456-4f87-a575-4a85b759cd1d", limit: 1)
+        )
+        #expect(conversation.messages.count == 1)
+        #expect(conversation.messages[0].role == .assistant)
+        #expect(conversation.messages[0].content == "Hi from transcript")
     }
 
     @Test("loadSession limit uses recent blobs for store db")
@@ -306,13 +306,12 @@ struct CursorSessionTests {
             sqlite: sqlite,
             baseDir: URL(fileURLWithPath: "/nonexistent")
         )
-        let conversation = try await reader.loadSession(id: "cursor-session", storagePath: dbPath, limit: 2)
+        let conversation = try #require(try await reader.loadSession(id: "cursor-session", storagePath: dbPath, limit: 2))
 
         #expect(sqlite.lastRecentBlobLimit == 800)
-        #expect(conversation != nil)
-        #expect(conversation?.messages.count == 2)
-        #expect(conversation?.messages[0].content == "latest question")
-        #expect(conversation?.messages[1].content == "latest answer")
+        #expect(conversation.messages.count == 2)
+        #expect(conversation.messages[0].content == "latest question")
+        #expect(conversation.messages[1].content == "latest answer")
     }
 
     @Test("loadSession restores projectPath from transcript when workspace metadata is unavailable")
@@ -333,10 +332,10 @@ struct CursorSessionTests {
             ),
         ]
 
-        let conversation = try await fixture.makeReader(sqlite: sqlite)
-            .loadSession(id: fixture.sessionID, storagePath: dbPath, limit: nil)
-
-        #expect(conversation != nil)
-        #expect(conversation?.projectPath == fixture.genericProjectPath)
+        let conversation = try #require(
+            try await fixture.makeReader(sqlite: sqlite)
+                .loadSession(id: fixture.sessionID, storagePath: dbPath, limit: nil)
+        )
+        #expect(conversation.projectPath == fixture.genericProjectPath)
     }
 }
