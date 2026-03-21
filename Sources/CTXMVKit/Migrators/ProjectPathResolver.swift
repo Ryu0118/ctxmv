@@ -50,6 +50,22 @@ package enum ProjectPathResolver {
         return existing.min(by: compareCandidatePaths)
     }
 
+    /// Resolves a project path that may not exist on disk due to Claude Code's lossy `-` encoding.
+    /// Returns the original path if it exists, otherwise searches for the real directory.
+    package static func resolveProjectPath(
+        _ projectPath: String?,
+        fileSystem: any FileSystemProtocol
+    ) -> String? {
+        guard let projectPath, !projectPath.isEmpty else { return nil }
+        var isDirectory = ObjCBool(false)
+        if fileSystem.fileExists(atPath: projectPath, isDirectory: &isDirectory), isDirectory.boolValue {
+            return projectPath
+        }
+        let encoded = encodedClaudeProjectPath(projectPath)
+        let candidates = existingDirectoryCandidates(encoded: encoded, fileSystem: fileSystem)
+        return candidates.first ?? projectPath
+    }
+
     /// Paths `P` with `encodedClaudeProjectPath(P) == encoded` that exist as directories.
     package static func existingDirectoryCandidates(
         encoded: String,

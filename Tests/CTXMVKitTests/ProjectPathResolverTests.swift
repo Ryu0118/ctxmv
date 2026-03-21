@@ -55,6 +55,52 @@ struct ProjectPathResolverTests {
         #expect(resolved == URL(fileURLWithPath: path).standardizedFileURL.path)
     }
 
+    // MARK: - resolveProjectPath tests
+
+    @Test("resolveProjectPath returns path as-is when it exists on disk")
+    func resolveReturnsExistingPath() {
+        let fileSystem = MockFileManager()
+        let path = "/Users/example/workspace/my-project"
+        fileSystem.directories[path] = []
+        let resolved = ProjectPathResolver.resolveProjectPath(path, fileSystem: fileSystem)
+        #expect(resolved == path)
+    }
+
+    @Test("resolveProjectPath finds real directory when stored path is wrong due to lossy encoding")
+    func resolveFindsCorrectHyphenatedPath() {
+        let fileSystem = MockFileManager()
+        let wrongNested = "/Users/example/acme/foo/bar/baz"
+        let realHyphenated = "/Users/example/acme/foo-bar-baz"
+        fileSystem.directories[realHyphenated] = []
+
+        let resolved = ProjectPathResolver.resolveProjectPath(wrongNested, fileSystem: fileSystem)
+        #expect(resolved == URL(fileURLWithPath: realHyphenated).standardizedFileURL.path)
+    }
+
+    @Test("resolveProjectPath returns original path when no candidate exists")
+    func resolveFallsBackToOriginal() {
+        let fileSystem = MockFileManager()
+        let nonexistent = "/Users/example/acme/foo/bar/baz"
+        let resolved = ProjectPathResolver.resolveProjectPath(nonexistent, fileSystem: fileSystem)
+        #expect(resolved == nonexistent)
+    }
+
+    @Test("resolveProjectPath returns nil for nil input")
+    func resolveReturnsNilForNil() {
+        let fileSystem = MockFileManager()
+        let resolved = ProjectPathResolver.resolveProjectPath(nil, fileSystem: fileSystem)
+        #expect(resolved == nil)
+    }
+
+    @Test("resolveProjectPath returns nil for empty string")
+    func resolveReturnsNilForEmpty() {
+        let fileSystem = MockFileManager()
+        let resolved = ProjectPathResolver.resolveProjectPath("", fileSystem: fileSystem)
+        #expect(resolved == nil)
+    }
+
+    // MARK: - cdPath tests
+
     @Test("falls back to stored string when no candidate directory exists")
     func fallsBackToStoredWhenNothingExists() {
         let fileSystem = MockFileManager()

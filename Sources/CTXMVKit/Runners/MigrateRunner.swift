@@ -90,7 +90,7 @@ package struct MigrateRunner {
     /// Prints the exact resume command, reusing the existing session path when migration was skipped as a duplicate.
     private func printResumeHint(path: String, sessionID: String, projectPath: String?, alreadyMigrated: Bool) {
         let resumeCommand = resumeCommand(forSessionID: sessionID)
-        let resolvedProjectPath = resolveProjectPath(projectPath)
+        let resolvedProjectPath = ProjectPathResolver.resolveProjectPath(projectPath, fileSystem: fileSystem)
         let cwdForHint: String? = switch target {
         case .claudeCode:
             ProjectPathResolver.cdPath(
@@ -138,22 +138,6 @@ package struct MigrateRunner {
         case .codex: "codex resume \(sessionID)"
         case .cursor: "cursor-agent --resume \(sessionID)"
         }
-    }
-
-    /// If the stored project path doesn't exist on disk, tries to find the real directory
-    /// by re-encoding and searching for candidates (handles Claude Code's lossy `-` encoding).
-    private func resolveProjectPath(_ projectPath: String?) -> String? {
-        guard let projectPath, !projectPath.isEmpty else { return nil }
-        var isDirectory = ObjCBool(false)
-        if fileSystem.fileExists(atPath: projectPath, isDirectory: &isDirectory), isDirectory.boolValue {
-            return projectPath
-        }
-        let encoded = MigratorUtils.encodedClaudeProjectPath(projectPath)
-        let candidates = ProjectPathResolver.existingDirectoryCandidates(
-            encoded: encoded,
-            fileSystem: fileSystem
-        )
-        return candidates.first ?? projectPath
     }
 
     /// Derives the resumable session ID from the storage path format of each target agent.
