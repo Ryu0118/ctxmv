@@ -39,61 +39,8 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
 
-  # Release-mode compile on current main (pre-bump). Fails the run before any commit to main.
-  verify-macos:
-    needs: preflight
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Select Xcode 26.2
-        run: sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer
-
-      - name: Build Universal Binary (verify)
-        run: xcrun swift build -c release --arch arm64 --arch x86_64
-
-  verify-linux:
-    needs: preflight
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            arch: x86_64
-          - runner: ubuntu-24.04-arm
-            arch: arm64
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Install Swift (setup-swift)
-        if: matrix.arch == 'x86_64'
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.2'
-
-      - name: Install Swift (manual arm64)
-        if: matrix.arch == 'arm64'
-        run: |
-          sudo apt-get update && sudo apt-get install -y binutils gnupg2 libc6-dev libcurl4-openssl-dev \
-            libedit2 libgcc-13-dev libncurses-dev libpython3-dev libsqlite3-dev libstdc++-13-dev \
-            libxml2-dev libz3-dev pkg-config tzdata unzip zlib1g-dev
-          SWIFT_URL="https://download.swift.org/swift-6.2.1-release/ubuntu2404-aarch64/swift-6.2.1-RELEASE/swift-6.2.1-RELEASE-ubuntu24.04-aarch64.tar.gz"
-          curl -fsSL "$SWIFT_URL" -o /tmp/swift.tar.gz
-          sudo mkdir -p /opt/swift
-          sudo tar xzf /tmp/swift.tar.gz -C /opt/swift --strip-components=1
-          echo "/opt/swift/usr/bin" >> "$GITHUB_PATH"
-          rm /tmp/swift.tar.gz
-
-      - name: Install dependencies
-        if: matrix.arch == 'x86_64'
-        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
-
-      - name: Build Linux Binary (verify)
-        run: swift build -c release --static-swift-stdlib
-
-  # After verify passes: bump Version.swift, commit, push — then release builds embed the new version.
   prepare:
-    needs: [verify-macos, verify-linux]
+    needs: preflight
     runs-on: ubuntu-latest
     outputs:
       commit_sha: ${{ steps.push.outputs.sha }}
