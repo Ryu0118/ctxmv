@@ -79,18 +79,33 @@ package struct ShowRunner {
         try await findLocatedSession()?.conversation
     }
 
-    /// Uses list summaries first for metadata-aware loading, then falls back to direct provider lookup.
+    /// Tries a direct load first for full-length IDs, then falls back to listing all sessions.
     private func findLocatedSession() async throws -> LocatedSession? {
         logger.debug("Finding session", metadata: ["id": "\(sessionID)"])
 
         let candidateReaders = filteredReaders()
 
+        // Fast path: full UUID — skip expensive listSessions and load directly.
+        if sessionID.count >= 36 {
+            logger.info("⏳ Loading session \(sessionID)...")
+            if let located = try await loadFallbackSession(using: candidateReaders) {
+                return located
+            }
+        }
+
+        // Slow path: short/prefix/suffix ID needs summary scan to resolve.
+        let sourceLabel = candidateReaders.map(\.source.rawValue).joined(separator: ", ")
+        logger.info("⏳ Scanning sessions from [\(sourceLabel)]...")
         let summaries = try await listSessions(from: candidateReaders)
         if let summary = matchingSummary(in: summaries) {
             return try await loadLocatedSession(from: summary, using: candidateReaders)
         }
 
-        return try await loadFallbackSession(using: candidateReaders)
+        // Last resort for full IDs that weren't found via direct load either.
+        if sessionID.count < 36 {
+            return try await loadFallbackSession(using: candidateReaders)
+        }
+        return nil
     }
 
     private func listSessions(from candidateReaders: [any SessionReader]) async throws -> [SessionSummary] {
