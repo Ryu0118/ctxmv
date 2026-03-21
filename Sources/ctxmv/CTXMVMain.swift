@@ -1,8 +1,8 @@
 import CTXMVCLI
 import Logging
 
-@main
 /// Bootstraps logging and runs the root CLI command.
+@main
 struct CTXMVMain {
     static func main() async {
         LoggingSystem.bootstrap(logLevel: .info)

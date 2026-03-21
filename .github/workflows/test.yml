@@ -8,6 +8,9 @@ on:
       - 'Tests/**'
       - 'Package.swift'
       - 'Package.resolved'
+      - '.swiftlint.yml'
+      - 'nestfile.yaml'
+      - 'scripts/nest.sh'
       - '.github/workflows/test.yml'
   pull_request:
     branches: [main]
@@ -16,6 +19,9 @@ on:
       - 'Tests/**'
       - 'Package.swift'
       - 'Package.resolved'
+      - '.swiftlint.yml'
+      - 'nestfile.yaml'
+      - 'scripts/nest.sh'
       - '.github/workflows/test.yml'
 
 env:
@@ -26,8 +32,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  swiftlint:
+    name: SwiftLint (macOS)
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Select Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer
+
+      - name: Bootstrap dev tools (nest)
+        run: ./scripts/nest.sh bootstrap nestfile.yaml
+
+      - name: SwiftLint
+        run: .nest/bin/swiftlint lint --config .swiftlint.yml --strict
+
   test:
     name: Unit Tests (${{ matrix.name }})
+    needs: swiftlint
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read

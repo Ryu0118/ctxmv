@@ -57,7 +57,7 @@ package struct ListRunner: Sendable {
         let sessions = await withTaskGroup(of: [SessionSummary].self, returning: [SessionSummary].self) { group in
             for reader in activeReaders() {
                 group.addTask {
-                    (try? await reader.listSessions()) ?? []
+                    await (try? reader.listSessions()) ?? []
                 }
             }
             var all: [SessionSummary] = []
@@ -127,7 +127,8 @@ package struct ListRunner: Sendable {
         let displayDate = session.lastMessageAt ?? session.createdAt
         let date = DateUtils.dateTimeShort.string(from: displayDate)
         let projectPath = (session.projectPath ?? "-").pathTruncated(to: 26)
-        let lastUserMessage = (session.lastUserMessage?.replacingOccurrences(of: "\n", with: " ") ?? "-").truncated(to: 42)
+        let lastUserRaw = session.lastUserMessage?.replacingOccurrences(of: "\n", with: " ") ?? "-"
+        let lastUserMessage = lastUserRaw.truncated(to: 42)
         return [sourceLabel, shortSessionId, size, date, projectPath, lastUserMessage]
     }
 

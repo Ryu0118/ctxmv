@@ -23,7 +23,11 @@ final class MockFileManager: FileSystemProtocol, @unchecked Sendable {
         return entries
     }
 
-    func createDirectory(at url: URL, withIntermediateDirectories _: Bool, attributes _: [FileAttributeKey: Any]?) throws {
+    func createDirectory(
+        at url: URL,
+        withIntermediateDirectories _: Bool,
+        attributes _: [FileAttributeKey: Any]?
+    ) throws {
         directories[url.path] = directories[url.path] ?? []
     }
 
@@ -103,6 +107,7 @@ enum TestFixtures {
         )
     }
 
+    // swiftlint:disable line_length
     // Claude Code JSONL lines
     static func claudeCodeJSONL(timestamp: String = "2024-03-09T00:00:00.000Z") -> String {
         """
@@ -136,6 +141,8 @@ enum TestFixtures {
         {"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Fixed."}]},"timestamp":"\(timestamp)"}
         """
     }
+
+    // swiftlint:enable line_length
 
     /// Codex JSONL where session_meta appears after the first line.
     static func codexJSONLWithDelayedSessionMeta(
@@ -178,7 +185,7 @@ enum TestFixtures {
             #"{"role":"user","timestamp":"\#(timestamp)","message":{"content":[{"type":"text","text":"\#(wrappedUserQuery)"}]}}"#,
             #"{"role":"assistant","timestamp":"\#(timestamp)","message":{"content":[{"type":"text","text":"Inspecting project files"},{"type":"tool_use","name":"ReadFile","input":{"path":"\#(filePath)"}},{"type":"tool_use","name":"Shell","input":{"command":"pnpm test","working_directory":"\#(projectPath)"}}]}}"#,
             #"{"role":"assistant","timestamp":"\#(timestamp)","message":{"content":[{"type":"text","text":"Hi from transcript"}]}}"#,
-        ].compactMap { $0 }
+        ].compactMap(\.self)
 
         return lines.joined(separator: "\n")
     }

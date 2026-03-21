@@ -6,7 +6,7 @@ import Testing
 struct CodexMigratorTests {
     @Test("makeDocument emits migration meta, session meta, and paired assistant entries")
     func makeDocumentBuildsStructuredDocument() throws {
-        let builder = CodexSessionJSONLBuilder(workingDirectoryProvider: { "/fallback/cwd" })
+        let builder = CodexSessionJSONLBuilder { "/fallback/cwd" }
         let conversation = TestFixtures.makeConversation(
             id: "codex-build-jsonl",
             source: .claudeCode,
@@ -44,7 +44,7 @@ struct CodexMigratorTests {
 
     @Test("makeDocument replaces the first noisy user prompt and skips unsupported roles")
     func makeDocumentSanitizesFirstNoiseAndSkipsUnsupportedRoles() throws {
-        let builder = CodexSessionJSONLBuilder(workingDirectoryProvider: { "/fallback/cwd" })
+        let builder = CodexSessionJSONLBuilder { "/fallback/cwd" }
         let conversation = TestFixtures.makeConversation(
             id: "codex-build-noise",
             source: .claudeCode,
@@ -79,7 +79,7 @@ struct CodexMigratorTests {
 
     @Test("jsonl(for:) renders newline-terminated JSONL")
     func jsonlRendersJSONLLines() throws {
-        let builder = CodexSessionJSONLBuilder(workingDirectoryProvider: { "/fallback/cwd" })
+        let builder = CodexSessionJSONLBuilder { "/fallback/cwd" }
         let conversation = TestFixtures.makeConversation(id: "codex-build-render", source: .codex)
 
         let jsonl = builder.jsonl(for: conversation, sessionId: "session-789")
@@ -139,14 +139,14 @@ struct CodexMigratorTests {
         fileSystem.directories[yearDirectory.path] = [monthDirectory]
         fileSystem.directories[monthDirectory.path] = [dayDirectory]
         fileSystem.directories[dayDirectory.path] = [existingFile]
-        fileSystem.files[existingFile.path] = Data(
-            ((MigrationDeduplicator.encodeMeta(
-                originId: conversation.id,
-                originSource: conversation.source,
-                originMessageCount: conversation.messages.count,
-                originDigest: originDigest
-            ) ?? "") + "\n").utf8
+        let origin = MigrationOrigin(
+            originId: conversation.id,
+            originSource: conversation.source,
+            originMessageCount: conversation.messages.count,
+            originDigest: originDigest
         )
+        let metaLine = (MigrationDeduplicator.encodeMeta(origin: origin) ?? "") + "\n"
+        fileSystem.files[existingFile.path] = Data(metaLine.utf8)
 
         let migrator = CodexMigrator(fileSystem: fileSystem)
 

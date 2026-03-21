@@ -35,17 +35,23 @@ struct CodexRoleTests {
             ),
             TestCase(
                 description: "response_item role=assistant → .assistant",
-                jsonl: #"{"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"done"}]}}"#,
+                jsonl:
+                #"{"type":"response_item","payload":{"type":"message","role":"assistant""#
+                    + #","content":[{"type":"output_text","text":"done"}]}}"#,
                 expected: .assistant
             ),
             TestCase(
                 description: "response_item role=user → nil",
-                jsonl: #"{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"question"}]}}"#,
+                jsonl:
+                #"{"type":"response_item","payload":{"type":"message","role":"user""#
+                    + #","content":[{"type":"input_text","text":"question"}]}}"#,
                 expected: nil
             ),
             TestCase(
                 description: "response_item role=developer → nil",
-                jsonl: #"{"type":"response_item","payload":{"type":"message","role":"developer","content":[{"type":"input_text","text":"system"}]}}"#,
+                jsonl:
+                #"{"type":"response_item","payload":{"type":"message","role":"developer""#
+                    + #","content":[{"type":"input_text","text":"system"}]}}"#,
                 expected: nil
             ),
             TestCase(
@@ -81,7 +87,9 @@ struct CodexContentTests {
             ),
             TestCase(
                 description: "response_item payload.content output_text block",
-                jsonl: #"{"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Response"}]}}"#,
+                jsonl:
+                #"{"type":"response_item","payload":{"type":"message","role":"assistant""#
+                    + #","content":[{"type":"output_text","text":"Response"}]}}"#,
                 expected: "Response"
             ),
             TestCase(
@@ -234,9 +242,9 @@ struct CodexSessionTests {
 
         fileSystem.directories[base.path] = [subdir]
         fileSystem.directories[subdir.path] = [rollout]
-        fileSystem.files[rollout.path] = TestFixtures.codexJSONLWithDelayedSessionMeta(
+        fileSystem.files[rollout.path] = Data(TestFixtures.codexJSONLWithDelayedSessionMeta(
             sessionId: "4248e42d-6278-4e38-913b-f7a3ae075812"
-        ).data(using: .utf8)!
+        ).utf8)
 
         let reader = CodexSessionReader(fileSystem: fileSystem, baseDir: base)
         let conversation = try #require(

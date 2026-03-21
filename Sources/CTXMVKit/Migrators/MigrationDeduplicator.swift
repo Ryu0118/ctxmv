@@ -5,6 +5,26 @@
 #endif
 import Foundation
 
+/// Origin snapshot used for deduplication keys and serialized migration metadata.
+package struct MigrationOrigin: Sendable {
+    package let originId: String
+    package let originSource: AgentSource
+    package let originMessageCount: Int
+    package let originDigest: String
+
+    package init(
+        originId: String,
+        originSource: AgentSource,
+        originMessageCount: Int,
+        originDigest: String
+    ) {
+        self.originId = originId
+        self.originSource = originSource
+        self.originMessageCount = originMessageCount
+        self.originDigest = originDigest
+    }
+}
+
 /// Records the source snapshot for a migrated conversation.
 struct MigrationMeta: Codable, Sendable {
     static let migrationType = "ctxmv_migration"
@@ -29,52 +49,29 @@ private struct ClaudeProgressMetaLine: Codable {
 enum MigrationDeduplicator {
     private static let decoder = JSONDecoder()
 
-    static func makeMeta(
-        originId: String,
-        originSource: AgentSource,
-        originMessageCount: Int,
-        originDigest: String
-    ) -> MigrationMeta {
+    static func makeMeta(origin: MigrationOrigin) -> MigrationMeta {
         MigrationMeta(
             type: MigrationMeta.migrationType,
-            originId: originId,
-            originSource: originSource.rawValue,
-            originMessageCount: originMessageCount,
-            originDigest: originDigest,
+            originId: origin.originId,
+            originSource: origin.originSource.rawValue,
+            originMessageCount: origin.originMessageCount,
+            originDigest: origin.originDigest,
             targetFormatVersion: nil
         )
     }
 
-    static func encodeMeta(
-        originId: String,
-        originSource: AgentSource,
-        originMessageCount: Int,
-        originDigest: String
-    ) -> String? {
-        let meta = makeMeta(
-            originId: originId,
-            originSource: originSource,
-            originMessageCount: originMessageCount,
-            originDigest: originDigest
-        )
+    static func encodeMeta(origin: MigrationOrigin) -> String? {
+        let meta = makeMeta(origin: origin)
         guard let data = try? MigratorUtils.jsonEncoder.encode(meta) else { return nil }
         return String(data: data, encoding: .utf8)
     }
 
     static func encodeClaudeCodeMeta(
-        originId: String,
-        originSource: AgentSource,
-        originMessageCount: Int,
-        originDigest: String,
+        origin: MigrationOrigin,
         sessionId: String,
         timestamp: String
     ) -> String? {
-        let meta = makeMeta(
-            originId: originId,
-            originSource: originSource,
-            originMessageCount: originMessageCount,
-            originDigest: originDigest
-        )
+        let meta = makeMeta(origin: origin)
         let wrapped = ClaudeProgressMetaLine(
             type: "progress",
             sessionId: sessionId,
@@ -87,10 +84,7 @@ enum MigrationDeduplicator {
     }
 
     static func findExistingMigration(
-        originId: String,
-        originSource: AgentSource,
-        originMessageCount: Int,
-        originDigest: String,
+        origin: MigrationOrigin,
         in directory: URL,
         fileSystem: any FileSystemProtocol,
         allowBareMetaLine: Bool = true
@@ -112,19 +106,19 @@ enum MigrationDeduplicator {
                 fileSystem: fileSystem,
                 allowBareMetaLine: allowBareMetaLine
             ) else { continue }
-            guard meta.originId == originId, meta.originSource == originSource.rawValue else { continue }
+            guard meta.originId == origin.originId, meta.originSource == origin.originSource.rawValue else { continue }
 
             // Strict dedup: only exact same origin snapshot is considered duplicate.
             // Prefer digest (full history signature). For legacy files without digest,
             // fall back to exact message count equality.
             if let existingDigest = meta.originDigest {
-                if existingDigest == originDigest {
+                if existingDigest == origin.originDigest {
                     return file.path
                 }
                 continue
             }
 
-            if meta.originMessageCount == originMessageCount {
+            if meta.originMessageCount == origin.originMessageCount {
                 return file.path
             }
         }
@@ -133,10 +127,7 @@ enum MigrationDeduplicator {
     }
 
     static func findExistingMigrationRecursive(
-        originId: String,
-        originSource: AgentSource,
-        originMessageCount: Int,
-        originDigest: String,
+        origin: MigrationOrigin,
         in baseDirectory: URL,
         fileSystem: any FileSystemProtocol,
         allowBareMetaLine: Bool = true
@@ -151,10 +142,7 @@ enum MigrationDeduplicator {
         .lazy
         .compactMap { leafDirectory in
             findExistingMigration(
-                originId: originId,
-                originSource: originSource,
-                originMessageCount: originMessageCount,
-                originDigest: originDigest,
+                origin: origin,
                 in: leafDirectory,
                 fileSystem: fileSystem,
                 allowBareMetaLine: allowBareMetaLine
@@ -188,7 +176,6 @@ enum MigrationDeduplicator {
         guard let data = fileSystem.contents(atPath: file.path),
               let content = String(data: data, encoding: .utf8) else { return nil }
 
-        // Migration meta can appear on any line (first for Claude Code, last for Codex).
         for line in content.components(separatedBy: .newlines) {
             guard !line.isEmpty, let lineData = line.data(using: .utf8) else { continue }
 

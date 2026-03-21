@@ -115,11 +115,14 @@ struct CodexMigrator: SessionMigrator, Sendable {
         originDigest: String,
         sessionsBase: URL
     ) throws {
-        if let existing = MigrationDeduplicator.findExistingMigrationRecursive(
+        let origin = MigrationOrigin(
             originId: conversation.id,
             originSource: conversation.source,
             originMessageCount: conversation.messages.count,
-            originDigest: originDigest,
+            originDigest: originDigest
+        )
+        if let existing = MigrationDeduplicator.findExistingMigrationRecursive(
+            origin: origin,
             in: sessionsBase,
             fileSystem: fileSystem
         ) {

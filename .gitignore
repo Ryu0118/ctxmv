@@ -1,4 +1,5 @@
 .build/
+.nest/
 .swiftpm/
 .tmp-home/
 .serena/

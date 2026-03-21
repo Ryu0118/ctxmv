@@ -1,0 +1,49 @@
+#!/bin/sh
+set -eu
+
+SRCROOT=$(git rev-parse --show-toplevel)
+
+if [ -x "$SRCROOT/.nest/bin/swiftformat" ]; then
+  SWIFTFORMAT="$SRCROOT/.nest/bin/swiftformat"
+else
+  SWIFTFORMAT=$(command -v swiftformat) || {
+    echo "swiftformat not found. Run: make install-commands (or: brew install swiftformat)"
+    exit 1
+  }
+fi
+if [ -x "$SRCROOT/.nest/bin/swiftlint" ]; then
+  SWIFTLINT="$SRCROOT/.nest/bin/swiftlint"
+else
+  SWIFTLINT=$(command -v swiftlint) || {
+    echo "swiftlint not found. Run: make install-commands (or: brew install swiftlint)"
+    exit 1
+  }
+fi
+
+STAGED_SWIFT_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.swift$' || true)
+
+if [ -z "$STAGED_SWIFT_FILES" ]; then
+  exit 0
+fi
+
+echo "$STAGED_SWIFT_FILES" | xargs "$SWIFTFORMAT" --config "$SRCROOT/.swiftformat"
+echo "$STAGED_SWIFT_FILES" | xargs git add
+
+ABSOLUTE_FILES=""
+for file in $STAGED_SWIFT_FILES; do
+  if [ -f "$SRCROOT/$file" ]; then
+    ABSOLUTE_FILES="$ABSOLUTE_FILES $SRCROOT/$file"
+  fi
+done
+
+if [ -n "$ABSOLUTE_FILES" ]; then
+  # --force-exclude: honor .swiftlint.yml excluded paths even with absolute paths
+  # shellcheck disable=SC2086
+  if ! "$SWIFTLINT" lint --config "$SRCROOT/.swiftlint.yml" --force-exclude --strict --quiet $ABSOLUTE_FILES; then
+    echo ""
+    echo "SwiftLint reported issues. Fix them before committing."
+    exit 1
+  fi
+fi
+
+exit 0

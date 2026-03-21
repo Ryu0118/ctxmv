@@ -23,12 +23,15 @@ struct ClaudeCodeMigrator: SessionMigrator, Sendable {
 
         let projectDir = projectDirectory(for: conversation)
         let originDigest = MigrationDeduplicator.originDigest(for: conversation)
-
-        if let existing = MigrationDeduplicator.findExistingMigration(
+        let origin = MigrationOrigin(
             originId: conversation.id,
             originSource: conversation.source,
             originMessageCount: conversation.messages.count,
-            originDigest: originDigest,
+            originDigest: originDigest
+        )
+
+        if let existing = MigrationDeduplicator.findExistingMigration(
+            origin: origin,
             in: projectDir,
             fileSystem: fileSystem,
             allowBareMetaLine: false
@@ -67,63 +70,80 @@ struct ClaudeCodeMigrator: SessionMigrator, Sendable {
 
     /// Builds the Claude Code JSONL payload, including the leading migration meta line.
     func jsonl(for conversation: UnifiedConversation, sessionId: String) -> String {
-        let formatter = MigratorUtils.isoFormatter
-        let originDigest = MigrationDeduplicator.originDigest(for: conversation)
-
         var lines: [String] = []
+        if let progressLine = migrationProgressMetaLine(for: conversation, sessionId: sessionId) {
+            lines.append(progressLine)
+        }
+        lines.append(contentsOf: messageJSONLines(for: conversation, sessionId: sessionId))
+        return lines.joined(separator: "\n") + "\n"
+    }
 
-        if let metaLine = MigrationDeduplicator.encodeClaudeCodeMeta(
+    /// `progress` line wrapping `ctxmv_migration` so Claude Code recognizes the session (resume contract).
+    private func migrationProgressMetaLine(for conversation: UnifiedConversation, sessionId: String) -> String? {
+        let origin = migrationOrigin(for: conversation)
+        let createdAt = MigratorUtils.isoFormatter.string(from: conversation.createdAt)
+        return MigrationDeduplicator.encodeClaudeCodeMeta(
+            origin: origin,
+            sessionId: sessionId,
+            timestamp: createdAt
+        )
+    }
+
+    private func migrationOrigin(for conversation: UnifiedConversation) -> MigrationOrigin {
+        MigrationOrigin(
             originId: conversation.id,
             originSource: conversation.source,
             originMessageCount: conversation.messages.count,
-            originDigest: originDigest,
-            sessionId: sessionId,
-            timestamp: formatter.string(from: conversation.createdAt)
-        ) {
-            lines.append(metaLine)
-        }
+            originDigest: MigrationDeduplicator.originDigest(for: conversation)
+        )
+    }
 
-        var parentUuid: String? = nil
-
+    /// One JSONL object per user/assistant turn; `parentUuid` chains entries for ordering on resume.
+    private func messageJSONLines(for conversation: UnifiedConversation, sessionId: String) -> [String] {
+        let iso = MigratorUtils.isoFormatter
+        var parentUuid: String?
+        var lines: [String] = []
         for message in conversation.messages {
-            guard message.role == .user || message.role == .assistant else { continue }
+            let body = message.decodedContent(for: conversation.source)
+            guard let encoding = ClaudeCodeMessageEncoding(message: message, body: body) else { continue }
 
             let uuid = UUID().uuidString.lowercased()
-            let timestamp = formatter.string(from: message.timestamp ?? Date())
-            let body = message.decodedContent(for: conversation.source)
-
-            let content: TextOrBlocks
-            let messageRole: String
-            let entryType: String
-            if message.role == .user {
-                // Claude Code stores user content as a plain string.
-                content = .text(body)
-                messageRole = ClaudeCodeMessageRole.user.rawValue
-                entryType = ClaudeCodeEntryType.user.rawValue
-            } else {
-                // Assistant content uses block arrays so tool uses and rich output can coexist.
-                content = .blocks([ContentBlock(type: .text, text: body)])
-                messageRole = ClaudeCodeMessageRole.assistant.rawValue
-                entryType = ClaudeCodeEntryType.assistant.rawValue
-            }
-
+            let timestamp = iso.string(from: message.timestamp ?? Date())
             let entry = ClaudeCodeEntry(
-                type: entryType,
+                type: encoding.entryType,
                 sessionId: sessionId,
                 timestamp: timestamp,
                 uuid: uuid,
                 parentUuid: parentUuid,
-                message: ClaudeCodeMessage(role: messageRole, content: content)
+                message: ClaudeCodeMessage(role: encoding.messageRole, content: encoding.content)
             )
-
-            if let jsonStr = MigratorUtils.encodeLine(entry) {
-                lines.append(jsonStr)
+            if let line = MigratorUtils.encodeLine(entry) {
+                lines.append(line)
             }
-
-            // Claude Code threads entries through parent UUIDs so resume can reconstruct order.
             parentUuid = uuid
         }
+        return lines
+    }
+}
 
-        return lines.joined(separator: "\n") + "\n"
+// Maps unified roles to Claude Code entry shape (plain string vs block array).
+private struct ClaudeCodeMessageEncoding {
+    let entryType: String
+    let messageRole: String
+    let content: TextOrBlocks
+
+    init?(message: UnifiedMessage, body: String) {
+        switch message.role {
+        case .user:
+            entryType = ClaudeCodeEntryType.user.rawValue
+            messageRole = ClaudeCodeMessageRole.user.rawValue
+            content = .text(body)
+        case .assistant:
+            entryType = ClaudeCodeEntryType.assistant.rawValue
+            messageRole = ClaudeCodeMessageRole.assistant.rawValue
+            content = .blocks([ContentBlock(type: .text, text: body)])
+        default:
+            return nil
+        }
     }
 }

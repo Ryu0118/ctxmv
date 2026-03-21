@@ -17,15 +17,18 @@ struct MigrationDeduplicatorTests {
         fileSystem.directories[yearDir.path] = [monthDir]
         fileSystem.directories[monthDir.path] = [dayDir]
         fileSystem.directories[dayDir.path] = [file]
-        fileSystem.files[file.path] = Data(
-            #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","originMessageCount":3,"originDigest":"abc123"}"#.utf8
-        )
+        let metaLine = #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","#
+            + #""originMessageCount":3,"originDigest":"abc123"}"#
+        fileSystem.files[file.path] = Data(metaLine.utf8)
 
-        let existing = MigrationDeduplicator.findExistingMigrationRecursive(
+        let origin = MigrationOrigin(
             originId: "session-1",
             originSource: .codex,
             originMessageCount: 3,
-            originDigest: "abc123",
+            originDigest: "abc123"
+        )
+        let existing = MigrationDeduplicator.findExistingMigrationRecursive(
+            origin: origin,
             in: baseDir,
             fileSystem: fileSystem
         )
@@ -47,15 +50,18 @@ struct MigrationDeduplicatorTests {
         fileSystem.directories[validYearDir.path] = [monthDir]
         fileSystem.directories[monthDir.path] = [dayDir]
         fileSystem.directories[dayDir.path] = [file]
-        fileSystem.files[file.path] = Data(
-            #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","originMessageCount":3,"originDigest":"abc123"}"#.utf8
-        )
+        let metaLine = #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","#
+            + #""originMessageCount":3,"originDigest":"abc123"}"#
+        fileSystem.files[file.path] = Data(metaLine.utf8)
 
-        let existing = MigrationDeduplicator.findExistingMigrationRecursive(
+        let origin = MigrationOrigin(
             originId: "session-1",
             originSource: .codex,
             originMessageCount: 3,
-            originDigest: "abc123",
+            originDigest: "abc123"
+        )
+        let existing = MigrationDeduplicator.findExistingMigrationRecursive(
+            origin: origin,
             in: baseDir,
             fileSystem: fileSystem
         )
@@ -78,15 +84,18 @@ struct MigrationDeduplicatorTests {
         fileSystem.directories[yearDir.path] = [monthDir]
         fileSystem.directories[monthDir.path] = [dayDir]
         fileSystem.directories[dayDir.path] = [file]
-        fileSystem.files[file.path] = Data(
-            #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","originMessageCount":3,"originDigest":"abc123"}"#.utf8
-        )
+        let metaLine = #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","#
+            + #""originMessageCount":3,"originDigest":"abc123"}"#
+        fileSystem.files[file.path] = Data(metaLine.utf8)
 
-        let existing = MigrationDeduplicator.findExistingMigrationRecursive(
+        let origin = MigrationOrigin(
             originId: "session-1",
             originSource: .codex,
             originMessageCount: 3,
-            originDigest: "abc123",
+            originDigest: "abc123"
+        )
+        let existing = MigrationDeduplicator.findExistingMigrationRecursive(
+            origin: origin,
             in: baseDir,
             fileSystem: fileSystem
         )
@@ -100,15 +109,18 @@ struct MigrationDeduplicatorTests {
         let dir = URL(fileURLWithPath: "/mock/migrations")
         let file = dir.appendingPathComponent("target.jsonl")
         fileSystem.directories[dir.path] = [file]
-        fileSystem.files[file.path] = Data(
-            #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","originMessageCount":3,"originDigest":"abc123"}"#.utf8
-        )
+        let metaLine = #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","#
+            + #""originMessageCount":3,"originDigest":"abc123"}"#
+        fileSystem.files[file.path] = Data(metaLine.utf8)
 
-        let existing = MigrationDeduplicator.findExistingMigration(
+        let origin = MigrationOrigin(
             originId: "session-1",
             originSource: .codex,
             originMessageCount: 3,
-            originDigest: "abc123",
+            originDigest: "abc123"
+        )
+        let existing = MigrationDeduplicator.findExistingMigration(
+            origin: origin,
             in: dir,
             fileSystem: fileSystem
         )
@@ -122,15 +134,18 @@ struct MigrationDeduplicatorTests {
         let dir = URL(fileURLWithPath: "/mock/migrations")
         let file = dir.appendingPathComponent("target.jsonl")
         fileSystem.directories[dir.path] = [file]
-        fileSystem.files[file.path] = Data(
-            #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","originMessageCount":3,"originDigest":"old-digest"}"#.utf8
-        )
+        let metaLine = #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","#
+            + #""originMessageCount":3,"originDigest":"old-digest"}"#
+        fileSystem.files[file.path] = Data(metaLine.utf8)
 
-        let existing = MigrationDeduplicator.findExistingMigration(
+        let origin = MigrationOrigin(
             originId: "session-1",
             originSource: .codex,
             originMessageCount: 3,
-            originDigest: "new-digest",
+            originDigest: "new-digest"
+        )
+        let existing = MigrationDeduplicator.findExistingMigration(
+            origin: origin,
             in: dir,
             fileSystem: fileSystem
         )
@@ -144,15 +159,18 @@ struct MigrationDeduplicatorTests {
         let dir = URL(fileURLWithPath: "/mock/migrations")
         let file = dir.appendingPathComponent("legacy.jsonl")
         fileSystem.directories[dir.path] = [file]
-        fileSystem.files[file.path] = Data(
-            #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","originMessageCount":3}"#.utf8
-        )
+        let metaLine = #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","#
+            + #""originMessageCount":3}"#
+        fileSystem.files[file.path] = Data(metaLine.utf8)
 
-        let existing = MigrationDeduplicator.findExistingMigration(
+        let origin = MigrationOrigin(
             originId: "session-1",
             originSource: .codex,
             originMessageCount: 3,
-            originDigest: "any",
+            originDigest: "any"
+        )
+        let existing = MigrationDeduplicator.findExistingMigration(
+            origin: origin,
             in: dir,
             fileSystem: fileSystem
         )
@@ -166,15 +184,18 @@ struct MigrationDeduplicatorTests {
         let dir = URL(fileURLWithPath: "/mock/migrations")
         let file = dir.appendingPathComponent("legacy.jsonl")
         fileSystem.directories[dir.path] = [file]
-        fileSystem.files[file.path] = Data(
-            #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","originMessageCount":3}"#.utf8
-        )
+        let metaLine = #"{"type":"ctxmv_migration","originId":"session-1","originSource":"codex","#
+            + #""originMessageCount":3}"#
+        fileSystem.files[file.path] = Data(metaLine.utf8)
 
-        let existing = MigrationDeduplicator.findExistingMigration(
+        let origin = MigrationOrigin(
             originId: "session-1",
             originSource: .codex,
             originMessageCount: 4,
-            originDigest: "any",
+            originDigest: "any"
+        )
+        let existing = MigrationDeduplicator.findExistingMigration(
+            origin: origin,
             in: dir,
             fileSystem: fileSystem
         )

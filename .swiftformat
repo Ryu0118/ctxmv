@@ -1,0 +1,11 @@
+# SwiftFormat configuration for ctxmv (Swift Package).
+
+--swiftversion 6.0
+--indent 4
+--indentcase false
+--stripunusedargs closure-only
+
+--exclude .build
+--exclude .swiftpm
+--exclude "**/.build/**"
+--exclude "**/.swiftpm/**"

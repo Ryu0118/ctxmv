@@ -27,11 +27,11 @@ enum MigrationError: Error, CustomStringConvertible {
     var description: String {
         switch self {
         case .sessionEmpty:
-            return "Cannot migrate an empty conversation."
+            "Cannot migrate an empty conversation."
         case let .writeFailed(detail):
-            return "Failed to write migration file: \(detail)"
+            "Failed to write migration file: \(detail)"
         case let .alreadyMigrated(path):
-            return "Already migrated to: \(path)"
+            "Already migrated to: \(path)"
         }
     }
 }
