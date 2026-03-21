@@ -15,10 +15,9 @@ permissions:
   contents: write
 
 jobs:
-  prepare:
+  precheck:
+    name: Validate version input
     runs-on: ubuntu-latest
-    outputs:
-      commit_sha: ${{ steps.push.outputs.sha }}
     steps:
       - uses: actions/checkout@v6
 
@@ -40,6 +39,98 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
 
+  swiftlint:
+    name: SwiftLint (macOS)
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Select Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer
+
+      - name: Bootstrap dev tools (nest)
+        run: ./scripts/nest.sh bootstrap nestfile.yaml
+
+      - name: SwiftLint
+        run: .nest/bin/swiftlint lint --config .swiftlint.yml --strict
+
+  unit_test:
+    name: Unit Tests (${{ matrix.name }})
+    needs: [precheck, swiftlint]
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - name: macOS
+            runner: macos-latest
+            xcode-version: '26.2'
+          - name: Linux x86_64
+            runner: ubuntu-latest
+            arch: x86_64
+          - name: Linux arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Select Xcode
+        if: runner.os == 'macOS'
+        run: sudo xcode-select --switch /Applications/Xcode_${{ matrix.xcode-version }}.app/Contents/Developer
+
+      - name: Install Swift (setup-swift)
+        if: matrix.arch == 'x86_64'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.2'
+
+      - name: Install Swift (manual arm64)
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update && sudo apt-get install -y binutils gnupg2 libc6-dev libcurl4-openssl-dev \
+            libedit2 libgcc-13-dev libncurses-dev libpython3-dev libsqlite3-dev libstdc++-13-dev \
+            libxml2-dev libz3-dev pkg-config tzdata unzip zlib1g-dev
+          SWIFT_URL="https://download.swift.org/swift-6.2.1-release/ubuntu2404-aarch64/swift-6.2.1-RELEASE/swift-6.2.1-RELEASE-ubuntu24.04-aarch64.tar.gz"
+          curl -fsSL "$SWIFT_URL" -o /tmp/swift.tar.gz
+          sudo mkdir -p /opt/swift
+          sudo tar xzf /tmp/swift.tar.gz -C /opt/swift --strip-components=1
+          echo "/opt/swift/usr/bin" >> "$GITHUB_PATH"
+          rm /tmp/swift.tar.gz
+
+      - name: Install dependencies
+        if: matrix.arch == 'x86_64'
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Show Swift version
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            xcrun swift --version
+          else
+            swift --version
+          fi
+
+      - name: Run tests
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            xcrun swift test
+          else
+            swift test
+          fi
+
+  prepare:
+    needs: unit_test
+    runs-on: ubuntu-latest
+    outputs:
+      commit_sha: ${{ steps.push.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
       - name: Bump Version.swift
         run: |
           sed -i "s/static let current = \".*\"/static let current = \"$VERSION\"/" \
@@ -58,7 +149,7 @@ jobs:
             echo "Version.swift already at $VERSION, skipping commit"
           else
             git commit -m "chore: bump version to $VERSION"
-            git push origin main
+            git push origin HEAD:main
           fi
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         env:
