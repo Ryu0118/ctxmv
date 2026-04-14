@@ -128,7 +128,7 @@ package struct ShowRunner {
         return readers.filter { $0.source == source }
     }
 
-    /// Supports exact IDs plus the short suffix shown by `ctxmv list`.
+    /// Supports exact IDs, short-suffix shorthands from `ctxmv list`, and opening-prompt text.
     private func matchingSummary(in summaries: [SessionSummary]) -> SessionSummary? {
         if let exact = summaries.first(where: { $0.id == sessionID }) {
             return exact
@@ -139,9 +139,19 @@ package struct ShowRunner {
                 return prefixMatch
             }
             // `ctxmv list` displays last 8 chars, so allow suffix lookup as shorthand.
-            return summaries.first { $0.id.hasSuffix(sessionID) }
+            if let suffixMatch = summaries.first(where: { $0.id.hasSuffix(sessionID) }) {
+                return suffixMatch
+            }
         }
-        return nil
+
+        // Fall back to matching the session's opening prompt (first meaningful user message).
+        // This lets users pass the text shown by `codex resume '<prompt>'` directly.
+        return summaries.first { summary in
+            guard let initialPrompt = summary.initialPrompt else { return false }
+            return initialPrompt == sessionID
+                || initialPrompt.hasPrefix(sessionID)
+                || sessionID.hasPrefix(initialPrompt)
+        }
     }
 
     private func loadLocatedSession(
