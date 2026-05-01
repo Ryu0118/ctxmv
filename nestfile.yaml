@@ -9,3 +9,11 @@ targets:
     version: 0.63.2
     assetName: SwiftLintBinary.artifactbundle.zip
     checksum: 12befab676fc972ffde2ec295d016d53c3a85f64aabd9c7fee0032d681e307e9
+  - reference: Ryu0118/gitnagg
+    version: 0.3.0
+    assetName: gitnagg-0.3.0.artifactbundle.zip
+    checksum: 1a320a35e981e91efc035b4b2f7016d0e19c0afb51b7c62ba4154dc4c5ad1c75
+  - reference: Ryu0118/my-swift-linter
+    version: 0.6.0
+    assetName: my-swift-linter-0.6.0.artifactbundle.zip
+    checksum: 79d2259c16e5dcfe8dd22f9417d80ffec7c9ea93b7a3bafa25a9cc8094f9be8b
