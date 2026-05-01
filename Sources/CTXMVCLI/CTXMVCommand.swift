@@ -11,6 +11,7 @@ struct GlobalOptions: ParsableArguments {
 /// Root command for the `ctxmv` CLI.
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 public struct CTXMVCommand: AsyncParsableCommand {
+    /// ArgumentParser command configuration.
     public static let configuration = CommandConfiguration(
         commandName: "ctxmv",
         abstract: "Migrate sessions between AI coding agents",
@@ -23,5 +24,6 @@ public struct CTXMVCommand: AsyncParsableCommand {
         defaultSubcommand: MigrateCommand.self
     )
 
+    /// Creates a new command instance.
     public init() {}
 }

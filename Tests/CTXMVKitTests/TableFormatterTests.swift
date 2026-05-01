@@ -84,15 +84,14 @@ struct ListRunnerRowValuesTests {
     }
 
     private struct DateColumnScenario: CustomTestStringConvertible {
-        var testDescription: String {
-            name
-        }
-
         let name: String
         let source: AgentSource
         let created: Date
         let lastMessageAt: Date?
         let expectedDateForColumn: Date
+        var testDescription: String {
+            name
+        }
     }
 
     private static let dateColumnScenarios: [DateColumnScenario] = {
@@ -115,23 +114,6 @@ struct ListRunnerRowValuesTests {
             ),
         ]
     }()
-
-    @Test("date column prefers lastMessageAt or createdAt", arguments: dateColumnScenarios)
-    private func listDateColumn(_ scenario: DateColumnScenario) {
-        let summary = SessionSummary(
-            id: "test-id-suffix12",
-            source: scenario.source,
-            projectPath: nil,
-            createdAt: scenario.created,
-            lastMessageAt: scenario.lastMessageAt,
-            model: nil,
-            messageCount: 0,
-            lastUserMessage: nil
-        )
-        let values = ListRunner.rowValues(for: summary)
-        let dateStr = DateUtils.dateTimeShort.string(from: scenario.expectedDateForColumn)
-        #expect(values[3] == dateStr)
-    }
 
     @Test("observer session appends [obs] to source")
     func observerLabel() {
@@ -162,6 +144,23 @@ struct ListRunnerRowValuesTests {
         )
         let values = ListRunner.rowValues(for: summary)
         #expect(values[5] == "-")
+    }
+
+    @Test("date column prefers lastMessageAt or createdAt", arguments: dateColumnScenarios)
+    private func listDateColumn(_ scenario: DateColumnScenario) {
+        let summary = SessionSummary(
+            id: "test-id-suffix12",
+            source: scenario.source,
+            projectPath: nil,
+            createdAt: scenario.created,
+            lastMessageAt: scenario.lastMessageAt,
+            model: nil,
+            messageCount: 0,
+            lastUserMessage: nil
+        )
+        let values = ListRunner.rowValues(for: summary)
+        let dateStr = DateUtils.dateTimeShort.string(from: scenario.expectedDateForColumn)
+        #expect(values[3] == dateStr)
     }
 }
 

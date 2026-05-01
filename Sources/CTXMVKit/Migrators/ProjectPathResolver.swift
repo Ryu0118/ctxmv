@@ -13,17 +13,21 @@ package enum ProjectPathResolver {
         MigratorUtils.encodedClaudeProjectPath(absolutePath)
     }
 
+    /// Returns the best `cd` target directory for a Claude Code resume hint.
+    ///
+    /// Prefers the stored project path when it re-encodes to the same bucket as the
+    /// written JSONL file; otherwise enumerates all matching candidates on disk.
     package static func cdPath(
         forStoredProjectPath stored: String?,
         writtenJSONLPath: String,
         fileSystem: any FileSystemProtocol
     ) -> String? {
-        let encoded = URL(fileURLWithPath: writtenJSONLPath).deletingLastPathComponent().lastPathComponent
+        let encoded = URL(filePath: writtenJSONLPath).deletingLastPathComponent().lastPathComponent
         guard !encoded.isEmpty else { return stored }
 
         // Fast path: metadata path exists and matches the same bucket as the written file.
         if let stored, !stored.isEmpty {
-            let normalized = URL(fileURLWithPath: stored).standardizedFileURL.path
+            let normalized = URL(filePath: stored).standardizedFileURL.path
             var isDirectory = ObjCBool(false)
             if fileSystem.fileExists(atPath: normalized, isDirectory: &isDirectory), isDirectory.boolValue,
                encodedClaudeProjectPath(normalized) == encoded
@@ -42,7 +46,7 @@ package enum ProjectPathResolver {
 
         // Multiple filesystem paths collide under the same encoding (hyphenated segment vs extra nested dirs).
         if let stored, !stored.isEmpty {
-            let normalized = URL(fileURLWithPath: stored).standardizedFileURL.path
+            let normalized = URL(filePath: stored).standardizedFileURL.path
             if existing.contains(normalized) {
                 return normalized
             }
@@ -76,7 +80,7 @@ package enum ProjectPathResolver {
         var results: [String] = []
         for components in componentLists {
             let path = "/" + components.joined(separator: "/")
-            let normalized = URL(fileURLWithPath: path).standardizedFileURL.path
+            let normalized = URL(filePath: path).standardizedFileURL.path
             guard encodedClaudeProjectPath(normalized) == encoded else { continue }
             var isDirectory = ObjCBool(false)
             if fileSystem.fileExists(atPath: normalized, isDirectory: &isDirectory), isDirectory.boolValue {
@@ -130,35 +134,42 @@ package enum ProjectPathResolver {
 
         var results: [[String]] = []
         // Hyphens in this chunk are literal (one directory name that contains `-` characters).
-        for tail in dfs(remaining: "", components: components + [remaining], encoded: encoded, state: &state) {
-            results.append(tail)
-        }
+        results.append(
+            contentsOf: dfs(remaining: "", components: components + [remaining], encoded: encoded, state: &state)
+        )
         // Hyphens separate additional path components.
-        var index = remaining.startIndex
-        while index < remaining.endIndex {
-            if remaining[index] == "-" {
-                let prefix = String(remaining[..<index])
-                let suffix = String(remaining[remaining.index(after: index)...])
-                if !prefix.isEmpty {
-                    for tail in dfs(
-                        remaining: suffix,
-                        components: components + [prefix],
-                        encoded: encoded,
-                        state: &state
-                    ) {
-                        results.append(tail)
-                    }
-                }
-            }
-            index = remaining.index(after: index)
+        for hyphenIndex in remaining.indices where remaining[hyphenIndex] == "-" {
+            results.append(
+                contentsOf: dfsSplit(
+                    remaining: remaining,
+                    at: hyphenIndex,
+                    components: components,
+                    encoded: encoded,
+                    state: &state
+                )
+            )
         }
         return results
     }
 
+    /// DFS branch for treating the hyphen at `hyphenIndex` as a path-component separator.
+    private static func dfsSplit(
+        remaining: String,
+        at hyphenIndex: String.Index,
+        components: [String],
+        encoded: String,
+        state: inout DFSState
+    ) -> [[String]] {
+        let prefix = String(remaining[..<hyphenIndex])
+        guard !prefix.isEmpty else { return [] }
+        let suffix = String(remaining[remaining.index(after: hyphenIndex)...])
+        return dfs(remaining: suffix, components: components + [prefix], encoded: encoded, state: &state)
+    }
+
     /// Prefer shallower paths, then lexicographic (stable, deterministic).
     private static func compareCandidatePaths(_ lhs: String, _ rhs: String) -> Bool {
-        let lhsDepth = URL(fileURLWithPath: lhs).pathComponents.count { $0 != "/" }
-        let rhsDepth = URL(fileURLWithPath: rhs).pathComponents.count { $0 != "/" }
+        let lhsDepth = URL(filePath: lhs).pathComponents.count { $0 != "/" }
+        let rhsDepth = URL(filePath: rhs).pathComponents.count { $0 != "/" }
         if lhsDepth != rhsDepth {
             return lhsDepth < rhsDepth
         }

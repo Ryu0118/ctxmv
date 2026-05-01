@@ -7,6 +7,7 @@ package struct TableColumn {
     /// Gap (number of spaces) after this column. Last column has no gap.
     let gap: Int
 
+    /// Creates a column with the given title, fixed width, and optional trailing gap.
     package init(title: String, width: Int, gap: Int = 2) {
         self.title = title
         self.width = width
@@ -18,6 +19,7 @@ package struct TableColumn {
 package struct TableFormatter {
     let columns: [TableColumn]
 
+    /// Creates a formatter for the given column definitions.
     package init(columns: [TableColumn]) {
         self.columns = columns
     }

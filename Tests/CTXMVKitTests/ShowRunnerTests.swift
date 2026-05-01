@@ -32,10 +32,6 @@ struct ShowRunnerTests {
 
     /// Load-limit behavior when resolving from `SessionSummary` (auto cap vs explicit `messageLimit`).
     private struct LoadLimitScenario: CustomTestStringConvertible {
-        var testDescription: String {
-            name
-        }
-
         let name: String
         let byteSize: Int64
         let messageLimit: Int?
@@ -44,6 +40,9 @@ struct ShowRunnerTests {
         let summaryStoragePath: String?
         let expectedLoadLimit: Int?
         let expectedLoadedStoragePath: String?
+        var testDescription: String {
+            name
+        }
     }
 
     private static let loadLimitScenarios: [LoadLimitScenario] = [

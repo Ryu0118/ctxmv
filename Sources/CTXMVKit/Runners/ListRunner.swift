@@ -11,6 +11,7 @@ package struct ListRunner {
 
     private let readers: [any SessionReader]
 
+    /// Creates a runner using the default file system and SQLite provider.
     package init(
         source: AgentSource? = nil,
         project: String? = nil,
@@ -41,6 +42,7 @@ package struct ListRunner {
         self.readers = readers
     }
 
+    /// Fetches, filters, and prints all matching sessions as a table.
     package func run() async throws {
         let sessions = try await fetchAndFilter()
         if sessions.isEmpty {
@@ -48,6 +50,19 @@ package struct ListRunner {
             return
         }
         printTable(sessions)
+    }
+
+    /// Returns the ordered cell values for a single table row.
+    package static func rowValues(for session: SessionSummary) -> [String] {
+        let sourceLabel = session.source.rawValue + (session.isObserverSession ? " [obs]" : "")
+        let shortSessionId = String(session.id.suffix(8))
+        let size = session.byteSize.map { $0.formattedByteCount() } ?? "-"
+        let displayDate = session.lastMessageAt ?? session.createdAt
+        let date = DateUtils.dateTimeShort.string(from: displayDate)
+        let projectPath = (session.projectPath ?? "-").pathTruncated(to: 26)
+        let lastUserRaw = session.lastUserMessage?.replacingOccurrences(of: "\n", with: " ") ?? "-"
+        let lastUserMessage = lastUserRaw.truncated(to: 42)
+        return [sourceLabel, shortSessionId, size, date, projectPath, lastUserMessage]
     }
 
     /// Collects sessions from all active providers concurrently, then applies shared filters.
@@ -90,15 +105,6 @@ package struct ListRunner {
         !excludeObserver || !session.isObserverSession
     }
 
-    /// Sorts by most recent activity and applies the caller's hard limit.
-    private func finalize(_ sessions: [SessionSummary]) -> [SessionSummary] {
-        let sorted = sessions.sorted {
-            ($0.lastMessageAt ?? $0.createdAt) > ($1.lastMessageAt ?? $1.createdAt)
-        }
-        guard limit > 0 else { return sorted }
-        return Array(sorted.prefix(limit))
-    }
-
     private static let tableFormatter = TableFormatter(columns: [
         TableColumn(title: "SOURCE", width: 16),
         TableColumn(title: "SESSION", width: 12),
@@ -107,6 +113,15 @@ package struct ListRunner {
         TableColumn(title: "PROJECT", width: 28),
         TableColumn(title: "LAST PROMPT", width: 42, gap: 0),
     ])
+
+    /// Sorts by most recent activity and applies the caller's hard limit.
+    private func finalize(_ sessions: [SessionSummary]) -> [SessionSummary] {
+        let sorted = sessions.sorted {
+            ($0.lastMessageAt ?? $0.createdAt) > ($1.lastMessageAt ?? $1.createdAt)
+        }
+        guard limit > 0 else { return sorted }
+        return Array(sorted.prefix(limit))
+    }
 
     private func printTable(_ sessions: [SessionSummary]) {
         let tableFormatter = Self.tableFormatter
@@ -118,18 +133,6 @@ package struct ListRunner {
         }
 
         logger.info("\n\(sessions.count) session(s) shown.")
-    }
-
-    package static func rowValues(for session: SessionSummary) -> [String] {
-        let sourceLabel = session.source.rawValue + (session.isObserverSession ? " [obs]" : "")
-        let shortSessionId = String(session.id.suffix(8))
-        let size = session.byteSize.map { $0.formattedByteCount() } ?? "-"
-        let displayDate = session.lastMessageAt ?? session.createdAt
-        let date = DateUtils.dateTimeShort.string(from: displayDate)
-        let projectPath = (session.projectPath ?? "-").pathTruncated(to: 26)
-        let lastUserRaw = session.lastUserMessage?.replacingOccurrences(of: "\n", with: " ") ?? "-"
-        let lastUserMessage = lastUserRaw.truncated(to: 42)
-        return [sourceLabel, shortSessionId, size, date, projectPath, lastUserMessage]
     }
 
     /// Recolors only the source column so ANSI codes do not disturb downstream table alignment.

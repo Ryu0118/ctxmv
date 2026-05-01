@@ -11,6 +11,7 @@ package struct MigrateRunner {
     private let readers: [any SessionReader]
     private let fileSystem: any FileSystemProtocol
 
+    /// Creates a runner using the default file system and SQLite provider.
     package init(
         sessionID: String,
         target: AgentSource,
@@ -40,6 +41,7 @@ package struct MigrateRunner {
         self.fileSystem = fileSystem
     }
 
+    /// Locates the session, migrates it to the target format, and prints resume instructions.
     package func run() async throws {
         let showRunner = ShowRunner(
             sessionID: sessionID,
@@ -142,7 +144,7 @@ package struct MigrateRunner {
 
     /// Derives the resumable session ID from the storage path format of each target agent.
     private func extractSessionID(from path: String) -> String {
-        let fileName = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
+        let fileName = URL(filePath: path).deletingPathExtension().lastPathComponent
         switch target {
         case .claudeCode:
             return fileName
@@ -152,7 +154,7 @@ package struct MigrateRunner {
             return parts.count >= 5 ? parts.suffix(5).joined(separator: "-") : fileName
         case .cursor:
             return fileName == "store"
-                ? URL(fileURLWithPath: path).deletingLastPathComponent().lastPathComponent
+                ? URL(filePath: path).deletingLastPathComponent().lastPathComponent
                 : fileName
         }
     }

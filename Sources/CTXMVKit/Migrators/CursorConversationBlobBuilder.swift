@@ -112,10 +112,7 @@ struct CursorConversationBlobBuilder {
             case .user:
                 flushTurn()
                 pendingUserMessage = message
-            case .assistant:
-                guard pendingUserMessage != nil else {
-                    continue
-                }
+            case .assistant where pendingUserMessage != nil:
                 pendingAssistantSteps.append(message.decodedContent(for: source))
             default:
                 continue

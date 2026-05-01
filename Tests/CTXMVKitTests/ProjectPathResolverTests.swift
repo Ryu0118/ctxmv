@@ -42,7 +42,7 @@ struct ProjectPathResolverTests {
             writtenJSONLPath: jsonl,
             fileSystem: fileSystem
         )
-        #expect(resolved == URL(fileURLWithPath: hyphenated).standardizedFileURL.path)
+        #expect(resolved == URL(filePath: hyphenated).standardizedFileURL.path)
     }
 
     @Test("returns stored path when it exists and matches the written bucket")
@@ -57,7 +57,7 @@ struct ProjectPathResolverTests {
             writtenJSONLPath: jsonl,
             fileSystem: fileSystem
         )
-        #expect(resolved == URL(fileURLWithPath: path).standardizedFileURL.path)
+        #expect(resolved == URL(filePath: path).standardizedFileURL.path)
     }
 
     @Test("falls back to stored string when no candidate directory exists")
@@ -92,7 +92,7 @@ struct ProjectPathResolverTests {
         fileSystem.directories[realHyphenated] = []
 
         let resolved = ProjectPathResolver.resolveProjectPath(wrongNested, fileSystem: fileSystem)
-        #expect(resolved == URL(fileURLWithPath: realHyphenated).standardizedFileURL.path)
+        #expect(resolved == URL(filePath: realHyphenated).standardizedFileURL.path)
     }
 
     @Test("resolveProjectPath returns original path when no candidate exists")

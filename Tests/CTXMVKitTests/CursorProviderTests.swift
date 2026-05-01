@@ -9,14 +9,6 @@ struct CursorBlobTests {
         let expectedRole: MessageRole?
         let expectedContent: String?
 
-        var testDescription: String {
-            description
-        }
-
-        private static let multiBlockAssistantJSON =
-            // swiftlint:disable:next line_length
-            #"{"role":"assistant","content":[{"type":"text","text":"Line 1"},{"type":"tool_use","name":"bash"},{"type":"text","text":"Line 2"}]}"#
-
         static let allCases: [TestCase] = [
             TestCase(
                 description: "raw JSON user message",
@@ -75,6 +67,14 @@ struct CursorBlobTests {
                 expectedContent: nil
             ),
         ]
+
+        private static let multiBlockAssistantJSON =
+            // swiftlint:disable:next line_length
+            #"{"role":"assistant","content":[{"type":"text","text":"Line 1"},{"type":"tool_use","name":"bash"},{"type":"text","text":"Line 2"}]}"#
+
+        var testDescription: String {
+            description
+        }
     }
 
     @Test("extracts messages from blob data", arguments: TestCase.allCases)
@@ -125,16 +125,16 @@ struct HexDecodeTests {
         let input: String
         let expected: Data?
 
-        var testDescription: String {
-            description
-        }
-
         static let allCases: [TestCase] = [
             TestCase(description: "valid ASCII hex", input: "48656c6c6f", expected: Data("Hello".utf8)),
             TestCase(description: "empty string", input: "", expected: Data()),
             TestCase(description: "invalid hex chars", input: "ZZZZ", expected: nil),
             TestCase(description: "odd length hex", input: "ABC", expected: nil),
         ]
+
+        var testDescription: String {
+            description
+        }
     }
 
     @Test("converts hex strings", arguments: TestCase.allCases)
@@ -187,8 +187,8 @@ struct CursorSessionTests {
             let transcriptDirectory = workspace.appendingPathComponent("agent-transcripts")
             let sessionDirectory = transcriptDirectory.appendingPathComponent(sessionID)
             let transcriptFile = sessionDirectory.appendingPathComponent("\(sessionID).jsonl")
-            let packageJSON = URL(fileURLWithPath: genericProjectPath).appendingPathComponent("package.json")
-            let sourceFile = URL(fileURLWithPath: genericProjectPath).appendingPathComponent("src/index.ts")
+            let packageJSON = URL(filePath: genericProjectPath).appendingPathComponent("package.json")
+            let sourceFile = URL(filePath: genericProjectPath).appendingPathComponent("src/index.ts")
 
             fileSystem.directories[home.path] = [home.appendingPathComponent(".cursor")]
             fileSystem.directories[projectsRoot.path] = [workspace]
@@ -200,7 +200,7 @@ struct CursorSessionTests {
                 sourceFile.deletingLastPathComponent(),
             ]
             fileSystem
-                .directories[URL(fileURLWithPath: genericProjectPath).appendingPathComponent("src").path] = [sourceFile]
+                .directories[URL(filePath: genericProjectPath).appendingPathComponent("src").path] = [sourceFile]
 
             fileSystem.files[helperSkillFile.path] = Data("skill".utf8)
             fileSystem.files[packageJSON.path] = Data("{}".utf8)
@@ -241,7 +241,7 @@ struct CursorSessionTests {
         let reader = CursorSessionReader(
             fileSystem: MockFileManager(),
             sqlite: MockSQLiteReader(),
-            baseDir: URL(fileURLWithPath: "/nonexistent")
+            baseDir: URL(filePath: "/nonexistent")
         )
 
         #expect(try await reader.listSessions().isEmpty)
@@ -320,7 +320,7 @@ struct CursorSessionTests {
         let reader = CursorSessionReader(
             fileSystem: fileSystem,
             sqlite: sqlite,
-            baseDir: URL(fileURLWithPath: "/nonexistent")
+            baseDir: URL(filePath: "/nonexistent")
         )
         let conversation = try #require(try await reader.loadSession(
             id: "cursor-session",

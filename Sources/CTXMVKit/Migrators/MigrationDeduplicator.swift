@@ -7,11 +7,16 @@ import Foundation
 
 /// Origin snapshot used for deduplication keys and serialized migration metadata.
 package struct MigrationOrigin {
+    /// Unique identifier of the source session.
     package let originId: String
+    /// Agent that owns the source session.
     package let originSource: AgentSource
+    /// Number of messages in the source conversation at migration time.
     package let originMessageCount: Int
+    /// SHA-256 digest of the full conversation history at migration time.
     package let originDigest: String
 
+    /// Creates an origin snapshot with the given identifiers and digest.
     package init(
         originId: String,
         originSource: AgentSource,
@@ -108,13 +113,12 @@ enum MigrationDeduplicator {
             ) else { continue }
             guard meta.originId == origin.originId, meta.originSource == origin.originSource.rawValue else { continue }
 
-            // Strict dedup: only exact same origin snapshot is considered duplicate.
-            // Prefer digest (full history signature). For legacy files without digest,
-            // fall back to exact message count equality.
-            if let existingDigest = meta.originDigest {
-                if existingDigest == origin.originDigest {
-                    return file.path
-                }
+            // Strict dedup: prefer digest (full history signature); fall back to message
+            // count equality for legacy files that have no stored digest.
+            if meta.originDigest == origin.originDigest {
+                return file.path
+            }
+            if meta.originDigest != nil {
                 continue
             }
 

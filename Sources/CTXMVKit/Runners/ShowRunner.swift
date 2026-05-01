@@ -24,6 +24,7 @@ package struct ShowRunner {
 
     private let readers: [any SessionReader]
 
+    /// Creates a runner using the default file system and SQLite provider.
     package init(
         sessionID: String,
         source: AgentSource? = nil,
@@ -62,6 +63,7 @@ package struct ShowRunner {
         self.readers = readers
     }
 
+    /// Finds the session and prints its conversation to the log output.
     package func run() async throws {
         guard let located = try await findLocatedSession() else {
             logger.error("Session '\(sessionID)' not found.")
@@ -75,6 +77,7 @@ package struct ShowRunner {
         logger.info("\(formatter.format(located.conversation))")
     }
 
+    /// Returns the unified conversation for the session, or `nil` if not found.
     package func findSession() async throws -> UnifiedConversation? {
         try await findLocatedSession()?.conversation
     }

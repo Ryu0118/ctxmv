@@ -48,10 +48,11 @@ struct CursorMigrationScanner {
                 continue
             }
 
-            if let existingDigest = metadata.originDigest {
-                if existingDigest == originDigest {
-                    return databasePath
-                }
+            // Strict dedup: prefer digest; fall back to message count for legacy files without digest.
+            if metadata.originDigest == originDigest {
+                return databasePath
+            }
+            if metadata.originDigest != nil {
                 continue
             }
 

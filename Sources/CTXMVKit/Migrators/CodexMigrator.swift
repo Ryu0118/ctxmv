@@ -100,7 +100,7 @@ struct CodexMigrator: SessionMigrator {
     /// 3. Default → `~/.codex/sessions/`
     private func sessionsBaseDirectory() -> URL {
         if let codexHome = ProcessInfo.processInfo.environment["CODEX_HOME"], !codexHome.isEmpty {
-            return URL(fileURLWithPath: codexHome).appendingPathComponent("sessions")
+            return URL(filePath: codexHome).appendingPathComponent("sessions")
         }
         let home = fileSystem.homeDirectoryForCurrentUser
         let snapDir = home.appendingPathComponent("snap/codex")

@@ -9,7 +9,7 @@ struct CursorTranscriptProjectPathResolverTests {
         let projectPath = "/Users/tester/workspaces/sample-project"
         let transcriptPath =
             "/Users/tester/.cursor/projects/workspace/agent-transcripts/session.jsonl"
-        let transcriptFile = URL(fileURLWithPath: transcriptPath)
+        let transcriptFile = URL(filePath: transcriptPath)
         let resolver = CursorTranscriptProjectPathResolver(fileSystem: fileSystem)
 
         fileSystem.directories[projectPath] = []
@@ -27,7 +27,7 @@ struct CursorTranscriptProjectPathResolverTests {
         let workspacePath = "/Users/tester/workspaces/library/example"
         let transcriptPath = "/Users/tester/.cursor/projects/Users-tester-workspaces-library-example"
             + "/agent-transcripts/session/session.jsonl"
-        let transcriptFile = URL(fileURLWithPath: transcriptPath)
+        let transcriptFile = URL(filePath: transcriptPath)
         let resolver = CursorTranscriptProjectPathResolver(fileSystem: fileSystem)
 
         let json = #"{"role":"assistant","message":{"content":[{"type":"tool_use","name":"ReadFile","input":{"path":"\#(workspacePath)"#
@@ -44,7 +44,7 @@ struct CursorTranscriptProjectPathResolverTests {
         let nonStandardizedPath = "/Users/tester/workspaces/tmp/../sample-project"
         let transcriptPath =
             "/Users/tester/.cursor/projects/workspace/agent-transcripts/session.jsonl"
-        let transcriptFile = URL(fileURLWithPath: transcriptPath)
+        let transcriptFile = URL(filePath: transcriptPath)
         let resolver = CursorTranscriptProjectPathResolver(fileSystem: fileSystem)
 
         fileSystem.directories[standardizedPath] = []

@@ -16,17 +16,21 @@ package extension Logger.Metadata {
 
 /// Writes colored log messages to standard output.
 package struct ColorLogHandler: LogHandler {
+    /// Attached key-value metadata for this log handler.
     package var metadata: Logger.Metadata = [:]
+    /// Minimum log level this handler will emit.
     package var logLevel: Logger.Level = .info
 
+    /// Creates a new handler; `label` is accepted for protocol conformance but unused.
     package init(label _: String) {}
 
+    /// Accesses a single metadata value by key.
     package subscript(metadataKey key: String) -> Logger.Metadata.Value? {
         get { metadata[key] }
         set { metadata[key] = newValue }
     }
 
-    // swiftlint:disable:next function_parameter_count
+    /// Renders the message, applying a named color when the metadata contains one.
     package func log(
         level _: Logger.Level,
         message: Logger.Message,

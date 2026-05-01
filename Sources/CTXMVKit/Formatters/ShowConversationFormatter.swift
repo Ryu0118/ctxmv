@@ -5,10 +5,12 @@ import Rainbow
 package struct ShowConversationFormatter {
     private let raw: Bool
 
+    /// Creates a formatter; pass `raw: true` to skip structured-block compaction.
     package init(raw: Bool) {
         self.raw = raw
     }
 
+    /// Returns the full conversation rendered as a human-readable string.
     package func format(_ conversation: UnifiedConversation) -> String {
         let renderedMessages = conversation.messages.enumerated().map { messageIndex, message in
             let (label, color) = roleLabelAndColor(message.role)
@@ -75,24 +77,33 @@ package struct ShowConversationFormatter {
     private func collapseBlankLines(_ text: String) -> [String] {
         var collapsed: [String] = []
         var previousBlank = false
-
         for line in text.components(separatedBy: .newlines) {
-            let isBlank = line.trimmingCharacters(in: .whitespaces).isEmpty
-            if isBlank {
-                if !previousBlank { collapsed.append("") }
-            } else {
-                collapsed.append(line)
-            }
-            previousBlank = isBlank
+            previousBlank = appendLine(line, to: &collapsed, previousBlank: previousBlank)
         }
-
-        while collapsed.first?.isEmpty == true {
-            collapsed.removeFirst()
-        }
-        while collapsed.last?.isEmpty == true {
-            collapsed.removeLast()
-        }
+        trimEdgeBlanks(from: &collapsed)
         return collapsed
+    }
+
+    /// Appends one line to the accumulator, skipping consecutive blank lines.
+    /// Returns whether the appended line was blank.
+    private func appendLine(_ line: String, to collapsed: inout [String], previousBlank: Bool) -> Bool {
+        let isBlank = line.trimmingCharacters(in: .whitespaces).isEmpty
+        if isBlank {
+            if !previousBlank { collapsed.append("") }
+        } else {
+            collapsed.append(line)
+        }
+        return isBlank
+    }
+
+    /// Removes leading and trailing empty strings from the array in-place.
+    private func trimEdgeBlanks(from lines: inout [String]) {
+        while lines.first?.isEmpty == true {
+            lines.removeFirst()
+        }
+        while lines.last?.isEmpty == true {
+            lines.removeLast()
+        }
     }
 
     /// Replaces large XML-looking sections with placeholders in compact mode.
@@ -107,29 +118,12 @@ package struct ShowConversationFormatter {
             let trimmed = lines[lineIndex].trimmingCharacters(in: .whitespaces)
 
             if trimmed.lowercased().hasPrefix("```xml") {
-                let blockStart = lineIndex
-                lineIndex += 1
-                while lineIndex < lines.count, lines[lineIndex].trimmingCharacters(in: .whitespaces) != "```" {
-                    lineIndex += 1
-                }
-                result.append("[XML block omitted: \(max(0, lineIndex - blockStart - 1)) lines, use --raw to show full content]")
-                if lineIndex < lines.count { lineIndex += 1 }
+                lineIndex = consumeCodeFence(lines: lines, from: lineIndex, into: &result)
                 continue
             }
 
             if isXMLTagLine(trimmed) {
-                let blockStart = lineIndex
-                while lineIndex < lines.count, isXMLTagLine(lines[lineIndex].trimmingCharacters(in: .whitespaces)) {
-                    lineIndex += 1
-                }
-                let count = lineIndex - blockStart
-                if count >= 3 {
-                    result.append("[XML-like tag block omitted: \(count) lines, use --raw to show full content]")
-                } else {
-                    for sourceLineIndex in blockStart ..< lineIndex {
-                        result.append(lines[sourceLineIndex])
-                    }
-                }
+                lineIndex = consumeXMLTagBlock(lines: lines, from: lineIndex, into: &result)
                 continue
             }
 
@@ -138,6 +132,34 @@ package struct ShowConversationFormatter {
         }
 
         return result.joined(separator: "\n")
+    }
+
+    /// Advances past a ` ```xml … ``` ` fence and appends a placeholder to `result`.
+    /// Returns the next line index to process.
+    private func consumeCodeFence(lines: [String], from start: Int, into result: inout [String]) -> Int {
+        var index = start + 1
+        while index < lines.count, lines[index].trimmingCharacters(in: .whitespaces) != "```" {
+            index += 1
+        }
+        result.append("[XML block omitted: \(max(0, index - start - 1)) lines, use --raw to show full content]")
+        if index < lines.count { index += 1 }
+        return index
+    }
+
+    /// Advances past a run of XML-tag lines and either omits or preserves them.
+    /// Returns the next line index to process.
+    private func consumeXMLTagBlock(lines: [String], from start: Int, into result: inout [String]) -> Int {
+        var index = start
+        while index < lines.count, isXMLTagLine(lines[index].trimmingCharacters(in: .whitespaces)) {
+            index += 1
+        }
+        let count = index - start
+        if count >= 3 {
+            result.append("[XML-like tag block omitted: \(count) lines, use --raw to show full content]")
+        } else {
+            result.append(contentsOf: lines[start ..< index])
+        }
+        return index
     }
 
     /// Uses a deliberately simple heuristic because these blocks are only for

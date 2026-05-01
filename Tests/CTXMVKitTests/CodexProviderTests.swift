@@ -19,10 +19,6 @@ struct CodexRoleTests {
         let jsonl: String
         let expected: MessageRole?
 
-        var testDescription: String {
-            description
-        }
-
         static let allCases: [TestCase] = [
             TestCase(
                 description: "event_msg user_message → .user",
@@ -61,6 +57,10 @@ struct CodexRoleTests {
                 expected: nil
             ),
         ]
+
+        var testDescription: String {
+            description
+        }
     }
 
     @Test("identifies Codex message roles", arguments: TestCase.allCases)
@@ -76,10 +76,6 @@ struct CodexContentTests {
         let description: String
         let jsonl: String
         let expected: String
-
-        var testDescription: String {
-            description
-        }
 
         static let allCases: [TestCase] = [
             TestCase(
@@ -105,6 +101,10 @@ struct CodexContentTests {
                 expected: ""
             ),
         ]
+
+        var testDescription: String {
+            description
+        }
     }
 
     @Test("extracts Codex message content", arguments: TestCase.allCases)
@@ -119,7 +119,7 @@ struct CodexRolloutTests {
     @Test("filters by rollout- prefix and .jsonl extension")
     func filterFiles() throws {
         let fileSystem = MockFileManager()
-        let base = URL(fileURLWithPath: "/mock/sessions")
+        let base = URL(filePath: "/mock/sessions")
         let rollout = base.appendingPathComponent("rollout-1.jsonl")
         let notRollout = base.appendingPathComponent("other.jsonl")
         let notJsonl = base.appendingPathComponent("rollout-2.txt")
@@ -141,7 +141,7 @@ struct CodexSessionTests {
     /// Shared rollout fixture rooted under a fake `.codex/sessions` subtree.
     private struct Fixture {
         let fileSystem = MockFileManager()
-        let baseDir = URL(fileURLWithPath: "/mock/codex/sessions")
+        let baseDir = URL(filePath: "/mock/codex/sessions")
         let subdirectoryName = "sub1"
 
         var subdirectory: URL {
@@ -172,7 +172,7 @@ struct CodexSessionTests {
     @Test("listSessions returns empty when base dir missing")
     func listEmpty() async throws {
         let fileSystem = MockFileManager()
-        let reader = CodexSessionReader(fileSystem: fileSystem, baseDir: URL(fileURLWithPath: "/nonexistent"))
+        let reader = CodexSessionReader(fileSystem: fileSystem, baseDir: URL(filePath: "/nonexistent"))
         #expect(try await reader.listSessions().isEmpty)
     }
 
@@ -236,7 +236,7 @@ struct CodexSessionTests {
     @Test("loadSession finds sessions when session_meta is not on the first line")
     func loadWithDelayedSessionMeta() async throws {
         let fileSystem = MockFileManager()
-        let base = URL(fileURLWithPath: "/mock/codex/sessions")
+        let base = URL(filePath: "/mock/codex/sessions")
         let subdir = base.appendingPathComponent("sub1")
         let rollout = subdir.appendingPathComponent(
             "rollout-2026-03-14-4248e42d-6278-4e38-913b-f7a3ae075812.jsonl"

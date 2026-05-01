@@ -19,10 +19,6 @@ struct DecodeProjectPathTests {
         let input: String
         let expected: String?
 
-        var testDescription: String {
-            description
-        }
-
         static let allCases: [TestCase] = [
             TestCase(
                 description: "standard encoded path",
@@ -34,6 +30,10 @@ struct DecodeProjectPathTests {
             TestCase(description: "no leading dash returns nil", input: "Users-example", expected: nil),
             TestCase(description: "empty string returns nil", input: "", expected: nil),
         ]
+
+        var testDescription: String {
+            description
+        }
     }
 
     @Test("decodes encoded-cwd to file path", arguments: TestCase.allCases)
@@ -47,10 +47,6 @@ struct ClaudeCodeRoleTests {
         let description: String
         let jsonl: String
         let expected: MessageRole?
-
-        var testDescription: String {
-            description
-        }
 
         static let allCases: [TestCase] = [
             TestCase(
@@ -74,6 +70,10 @@ struct ClaudeCodeRoleTests {
                 expected: nil
             ),
         ]
+
+        var testDescription: String {
+            description
+        }
     }
 
     @Test("identifies message roles", arguments: TestCase.allCases)
@@ -89,10 +89,6 @@ struct ClaudeCodeContentTests {
         let description: String
         let jsonl: String
         let expected: String
-
-        var testDescription: String {
-            description
-        }
 
         static let allCases: [TestCase] = [
             TestCase(
@@ -118,6 +114,10 @@ struct ClaudeCodeContentTests {
                 expected: ""
             ),
         ]
+
+        var testDescription: String {
+            description
+        }
     }
 
     @Test("extracts text content", arguments: TestCase.allCases)
@@ -134,10 +134,6 @@ struct ClaudeCodeSkipTests {
         let jsonl: String
         let expected: Bool
 
-        var testDescription: String {
-            description
-        }
-
         static let allCases: [TestCase] = [
             TestCase(description: "progress → skip", jsonl: #"{"type":"progress"}"#, expected: true),
             TestCase(
@@ -152,6 +148,10 @@ struct ClaudeCodeSkipTests {
                 expected: false
             ),
         ]
+
+        var testDescription: String {
+            description
+        }
     }
 
     @Test("filters non-message entry types", arguments: TestCase.allCases)
@@ -166,7 +166,7 @@ struct ClaudeCodeSessionTests {
     /// Shared file fixture that mirrors Claude Code's on-disk project/session hierarchy.
     private struct Fixture {
         let fileSystem = MockFileManager()
-        let baseDir = URL(fileURLWithPath: "/mock/claude/projects")
+        let baseDir = URL(filePath: "/mock/claude/projects")
         let encodedProjectDirectory = "-Users-example-test"
         let sessionID = "session-abc"
 
@@ -193,7 +193,7 @@ struct ClaudeCodeSessionTests {
     @Test("listSessions returns empty when base dir missing")
     func listEmpty() async throws {
         let fileSystem = MockFileManager()
-        let reader = ClaudeCodeSessionReader(fileSystem: fileSystem, baseDir: URL(fileURLWithPath: "/nonexistent"))
+        let reader = ClaudeCodeSessionReader(fileSystem: fileSystem, baseDir: URL(filePath: "/nonexistent"))
         #expect(try await reader.listSessions().isEmpty)
     }
 

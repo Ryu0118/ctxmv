@@ -45,10 +45,6 @@ struct ClaudeCodeCommandTests {
         let expectedContains: [String]
         let expectedExcludes: [String]
 
-        var testDescription: String {
-            "command block"
-        }
-
         static let allCases: [CommandCase] = [
             CommandCase(
                 input: DecoderFixtures.commandFull,
@@ -61,6 +57,10 @@ struct ClaudeCodeCommandTests {
                 expectedExcludes: ["<command-name>"]
             ),
         ]
+
+        var testDescription: String {
+            "command block"
+        }
     }
 
     @Test("decodes command block", arguments: CommandCase.allCases)
@@ -91,10 +91,6 @@ struct ClaudeCodeStdoutTests {
         let expectedPrefix: String
         let expectedBody: String
 
-        var testDescription: String {
-            "stdout"
-        }
-
         static let allCases: [StdoutCase] = [
             StdoutCase(
                 input: DecoderFixtures.stdoutSingle,
@@ -107,6 +103,10 @@ struct ClaudeCodeStdoutTests {
                 expectedBody: "multi"
             ),
         ]
+
+        var testDescription: String {
+            "stdout"
+        }
     }
 
     @Test("decodes stdout block", arguments: StdoutCase.allCases)
@@ -122,10 +122,6 @@ struct ClaudeCodeTaskNotificationTests {
         let input: String
         let expectedSummary: String?
         let expectedResult: String?
-
-        var testDescription: String {
-            "task notification"
-        }
 
         static let allCases: [TaskCase] = [
             TaskCase(
@@ -144,6 +140,10 @@ struct ClaudeCodeTaskNotificationTests {
                 expectedResult: nil
             ),
         ]
+
+        var testDescription: String {
+            "task notification"
+        }
     }
 
     @Test("decodes task notification", arguments: TaskCase.allCases)
@@ -163,9 +163,6 @@ struct ClaudeCodeTaskNotificationTests {
 struct ClaudeCodeUnchangedTests {
     struct UnchangedCase: CustomTestStringConvertible {
         let input: String
-        var testDescription: String {
-            "unchanged"
-        }
 
         static let allCases: [UnchangedCase] = [
             UnchangedCase(input: DecoderFixtures.unchangedGenerics),
@@ -174,6 +171,9 @@ struct ClaudeCodeUnchangedTests {
             UnchangedCase(input: DecoderFixtures.unchangedPlain),
             UnchangedCase(input: ""),
         ]
+        var testDescription: String {
+            "unchanged"
+        }
     }
 
     @Test("leaves unknown content unchanged", arguments: UnchangedCase.allCases)

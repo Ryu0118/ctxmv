@@ -7,7 +7,7 @@ struct CursorTranscriptWriterTests {
     func writeTranscript() throws {
         let fileSystem = MockFileManager()
         let writer = CursorTranscriptWriter(fileSystem: fileSystem)
-        let transcriptFile = URL(fileURLWithPath: "/tmp/agent-transcripts/session.jsonl")
+        let transcriptFile = URL(filePath: "/tmp/agent-transcripts/session.jsonl")
         let timestamp = TestFixtures.sampleDate
         let conversation = UnifiedConversation(
             id: "cursor-session",
