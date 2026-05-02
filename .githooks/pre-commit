@@ -3,6 +3,11 @@ set -eu
 
 SRCROOT=$(git rev-parse --show-toplevel)
 
+GITLEAKS=$(mise which gitleaks 2>/dev/null || command -v gitleaks 2>/dev/null || true)
+if [ -n "$GITLEAKS" ]; then
+  "$GITLEAKS" protect --staged --source "$SRCROOT" -v
+fi
+
 if [ -x "$SRCROOT/.nest/bin/swiftformat" ]; then
   SWIFTFORMAT="$SRCROOT/.nest/bin/swiftformat"
 else

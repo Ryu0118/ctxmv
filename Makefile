@@ -4,6 +4,7 @@ SWIFTLINT := .nest/bin/swiftlint
 .PHONY: install-commands format lint format-lint hooks test check
 
 install-commands:
+	mise install
 	./scripts/nest.sh bootstrap nestfile.yaml
 
 format:
