@@ -1,0 +1,35 @@
+rules:
+- name: readme-cli
+  sources:
+  - Sources/CTXMVCLI/CTXMVCommand.swift
+  - Sources/CTXMVCLI/MigrateCommand.swift
+  - Sources/CTXMVCLI/ListCommand.swift
+  - Sources/CTXMVCLI/ShowCommand.swift
+  - Sources/CTXMVCLI/Version.swift
+  doc: README.md
+  message: "CLI command surface changed \u2014 update README (Usage section) if commands,
+    options, or supported agents changed."
+  checksum: e520e669a9166e957a908b83e2fa510da851ea9fe4771055a68afd6c91194130
+- name: readme-migrators
+  sources:
+  - Sources/CTXMVKit/Migrators/ClaudeCodeMigrator.swift
+  - Sources/CTXMVKit/Migrators/CodexMigrator.swift
+  - Sources/CTXMVKit/Migrators/CursorMigrator.swift
+  - Sources/CTXMVKit/Migrators/Migrator.swift
+  - Sources/CTXMVKit/AgentSessionsBridge.swift
+  doc: README.md
+  message: "Migrator logic or supported agents changed \u2014 update README if supported
+    migration paths changed."
+  checksum: c8c754c3859e32dbb0d4d531ecc8ffc65856b42c0330e05b8806c08800f38a6e
+- name: agents-claude
+  sources:
+  - Package.swift
+  - Sources/CTXMVKit/Migrators/CursorStoreDatabaseWriter.swift
+  - Sources/CTXMVKit/Migrators/CursorMigrationPathResolver.swift
+  - Sources/CTXMVKit/Migrators/CodexSessionJSONLBuilder.swift
+  - Sources/CTXMVKit/Migrators/CursorConversationBlobBuilder.swift
+  - Sources/CTXMVKit/Migrators/ProjectPathResolver.swift
+  doc: CLAUDE.md
+  message: "Session storage format or path resolution changed \u2014 update CLAUDE.md
+    if architecture or storage path docs are affected."
+  checksum: 3dc07231b5fd650e22a1713c9942238aa0d6de59aae0436314a8ab3ec159a2a2
