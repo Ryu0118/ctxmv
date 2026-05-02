@@ -46,4 +46,14 @@ if [ -n "$ABSOLUTE_FILES" ]; then
   fi
 fi
 
+# docsync: check doc/source sync
+DOCSYNC="$SRCROOT/.nest/bin/docsync"
+if [ -x "$DOCSYNC" ] && [ -f "$SRCROOT/docsync.yml" ]; then
+  if ! "$DOCSYNC" check --config "$SRCROOT/docsync.yml" 2>/dev/null; then
+    echo ""
+    echo "docsync: docs are out of sync. Update docs or run 'docsync update-checksum'."
+    exit 1
+  fi
+fi
+
 exit 0
