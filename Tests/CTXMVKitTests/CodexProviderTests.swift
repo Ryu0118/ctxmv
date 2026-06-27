@@ -38,11 +38,11 @@ struct CodexRoleTests {
                 expected: .assistant
             ),
             TestCase(
-                description: "response_item role=user → nil",
+                description: "response_item role=user → .user",
                 jsonl:
                 #"{"type":"response_item","payload":{"type":"message","role":"user""#
                     + #","content":[{"type":"input_text","text":"question"}]}}"#,
-                expected: nil
+                expected: .user
             ),
             TestCase(
                 description: "response_item role=developer → nil",
