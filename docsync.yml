@@ -7,8 +7,8 @@ rules:
   - Sources/CTXMVCLI/ShowCommand.swift
   - Sources/CTXMVCLI/Version.swift
   doc: README.md
-  message: "CLI command surface changed \u2014 update README (Usage section) if commands,
-    options, or supported agents changed."
+  message: CLI command surface changed — update README (Usage section) if commands,
+    options, or supported agents changed.
   checksum: 3d737d6565f4112bbc57a625657847cad29953c6868654810a0db458cdfc6ea8
 - name: readme-migrators
   sources:
@@ -18,9 +18,9 @@ rules:
   - Sources/CTXMVKit/Migrators/Migrator.swift
   - Sources/CTXMVKit/AgentSessionsBridge.swift
   doc: README.md
-  message: "Migrator logic or supported agents changed \u2014 update README if supported
-    migration paths changed."
-  checksum: cdbb84f57367f2dc99144fec15bedc71d5bdd317ac32bfdf8fc770b5da42945f
+  message: Migrator logic or supported agents changed — update README if supported
+    migration paths changed.
+  checksum: 354cea1450c30867dd88743851c05ac4badbbe906f9dcb1d3c7f287515810d60
 - name: agents-claude
   sources:
   - Package.swift
@@ -30,6 +30,6 @@ rules:
   - Sources/CTXMVKit/Migrators/CursorConversationBlobBuilder.swift
   - Sources/CTXMVKit/Migrators/ProjectPathResolver.swift
   doc: CLAUDE.md
-  message: "Session storage format or path resolution changed \u2014 update CLAUDE.md
-    if architecture or storage path docs are affected."
+  message: Session storage format or path resolution changed — update CLAUDE.md if
+    architecture or storage path docs are affected.
   checksum: ab892470b9383d637a83cd83c8f790a0a94eb18f4043000c913c9049d83efd6c
