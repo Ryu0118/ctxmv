@@ -32,4 +32,4 @@ rules:
   doc: CLAUDE.md
   message: Session storage format or path resolution changed — update CLAUDE.md if
     architecture or storage path docs are affected.
-  checksum: ab892470b9383d637a83cd83c8f790a0a94eb18f4043000c913c9049d83efd6c
+  checksum: c23547a452137a1480d2de29dc69fdbde839f4352313ad01ec174a3a891e7c35
