@@ -37,7 +37,10 @@ struct ClaudeCodeMigrator: SessionMigrator {
         let origin = migrationOrigin(for: conversation)
 
         // Dedup across every bucket so a re-migration does not write into one alias while
-        // throwing on another.
+        // throwing on another. Note: a session migrated before this multi-bucket behavior existed
+        // lives only in the physical bucket; re-running migration finds it there and throws
+        // `alreadyMigrated` without backfilling the logical bucket. That is intentional (dedup is
+        // keyed on the unchanged source session); such sessions resume from the physical cwd only.
         for dir in projectDirs {
             if let existing = MigrationDeduplicator.findExistingMigration(
                 origin: origin,
