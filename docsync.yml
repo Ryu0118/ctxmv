@@ -20,7 +20,7 @@ rules:
   doc: README.md
   message: Migrator logic or supported agents changed — update README if supported
     migration paths changed.
-  checksum: f2a463b429651d6f31e9de78fdf5e3484c97680506248ca26c8c13d6f4999183
+  checksum: 9a7fcbca6ae47f2832f8ccc1fd60a6e75b987aed6ee5d8f2eca3b62249d5d2fe
 - name: agents-claude
   sources:
   - Package.swift

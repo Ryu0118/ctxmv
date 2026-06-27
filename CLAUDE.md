@@ -46,7 +46,7 @@ CLI tool to read, display, export, and migrate conversation sessions across AI c
 ## Gotchas
 
 - Cursor `store.db` uses protobuf + SHA-256 blob DAG. `meta` table values are hex-encoded JSON
-- Claude Code `--resume` requires the first line to be `progress` type, otherwise the session is not recognized
+- Claude Code `--resume` (TUI) rejects a session ("Failed to resume") whose **first line is `progress`**. Write the `ctxmv_migration` meta as a **trailing** `progress` line instead; dedup reads the whole file so position does not matter. The first line must be the first conversation entry. Each user/assistant entry must also carry `cwd`/`version`/`gitBranch`/`isSidechain` and a `parentUuid` chain, and assistant messages need a non-empty `message.model` — without these resume fails. (The headless `-p` resume path is lenient and does NOT surface these failures; verify against the TUI.)
 - Cursor `--resume` does not render past messages in TUI, but context is preserved
 - Codex records assistant responses in both `event_msg(agent_message)` and `response_item`. Both must be written for resume to restore responses
 - Dedup uses `originId + originSource + originDigest` (SHA-256 of conversation history). Re-migration is allowed when the source session has been updated

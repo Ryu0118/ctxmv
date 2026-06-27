@@ -30,7 +30,8 @@ struct ClaudeCodeMigrator: SessionMigrator {
         guard !conversation.messages.isEmpty else {
             throw MigrationError.sessionEmpty
         }
-        let projectDirs = projectDirectories(forCwd: resolvedCwd(for: conversation))
+        let cwd = resolvedCwd(for: conversation)
+        let projectDirs = projectDirectories(forCwd: cwd)
         guard let primaryDir = projectDirs.first else {
             throw MigrationError.writeFailed("No Claude Code project directory resolved")
         }
@@ -53,7 +54,7 @@ struct ClaudeCodeMigrator: SessionMigrator {
         }
 
         let sessionId = UUID().uuidString.lowercased()
-        guard let data = jsonl(for: conversation, sessionId: sessionId).data(using: .utf8) else {
+        guard let data = jsonl(for: conversation, sessionId: sessionId, cwd: cwd).data(using: .utf8) else {
             throw MigrationError.writeFailed("Failed to encode JSONL as UTF-8")
         }
 
@@ -92,13 +93,17 @@ struct ClaudeCodeMigrator: SessionMigrator {
         MigratorUtils.encodedClaudeProjectPath(path)
     }
 
-    /// Builds the Claude Code JSONL payload, including the leading migration meta line.
-    func jsonl(for conversation: UnifiedConversation, sessionId: String) -> String {
-        var lines: [String] = []
+    /// Builds the Claude Code JSONL payload.
+    ///
+    /// The `ctxmv_migration` meta is written as a trailing `progress` line, not a leading one:
+    /// the current Claude Code TUI rejects a session whose first line is `progress` ("Failed to
+    /// resume"), but tolerates one at the end. Dedup reads the whole file, so trailing is safe.
+    /// The first line is therefore the first conversation entry, matching a real session.
+    func jsonl(for conversation: UnifiedConversation, sessionId: String, cwd: String) -> String {
+        var lines = messageJSONLines(for: conversation, sessionId: sessionId, cwd: cwd)
         if let progressLine = migrationProgressMetaLine(for: conversation, sessionId: sessionId) {
             lines.append(progressLine)
         }
-        lines.append(contentsOf: messageJSONLines(for: conversation, sessionId: sessionId))
         return lines.joined(separator: "\n") + "\n"
     }
 
@@ -122,9 +127,17 @@ struct ClaudeCodeMigrator: SessionMigrator {
         )
     }
 
-    /// One JSONL object per user/assistant turn; `parentUuid` chains entries for ordering on resume.
-    private func messageJSONLines(for conversation: UnifiedConversation, sessionId: String) -> [String] {
+    /// One JSONL object per user/assistant turn.
+    ///
+    /// Each entry carries the metadata the Claude Code TUI requires to resume a session:
+    /// `cwd`/`version`/`gitBranch`/`isSidechain` and a `parentUuid` chain (`null` on the first
+    /// entry). Assistant messages additionally carry `message.model`. These fields were empirically
+    /// confirmed necessary — without them resume fails with "Failed to resume".
+    private func messageJSONLines(for conversation: UnifiedConversation, sessionId: String, cwd: String) -> [String] {
         let iso = MigratorUtils.isoFormatter
+        // Resume requires a non-empty model on assistant messages; any value satisfies it, so fall
+        // back to a sentinel when the source conversation has none (e.g. Codex rollouts).
+        let model = conversation.model.flatMap { $0.isEmpty ? nil : $0 } ?? Self.unknownModel
         var parentUuid: String?
         var lines: [String] = []
         for message in conversation.messages {
@@ -139,7 +152,15 @@ struct ClaudeCodeMigrator: SessionMigrator {
                 timestamp: timestamp,
                 uuid: uuid,
                 parentUuid: parentUuid,
-                message: ClaudeCodeMessage(role: encoding.messageRole, content: encoding.content)
+                version: Self.resumeContractVersion,
+                cwd: cwd,
+                gitBranch: "",
+                message: ClaudeCodeMessage(
+                    role: encoding.messageRole,
+                    content: encoding.content,
+                    model: encoding.entryType == ClaudeCodeEntryType.assistant.rawValue ? model : nil
+                ),
+                isSidechain: false
             )
             if let line = MigratorUtils.encodeLine(entry) {
                 lines.append(line)
@@ -148,6 +169,13 @@ struct ClaudeCodeMigrator: SessionMigrator {
         }
         return lines
     }
+
+    /// Placeholder `version` written into migrated entries. Any non-empty value satisfies the resume
+    /// contract; a fixed sentinel avoids implying a specific Claude Code build produced the session.
+    private static let resumeContractVersion = "0.0.0"
+
+    /// Fallback `message.model` when the source conversation records none.
+    private static let unknownModel = "unknown"
 }
 
 /// Maps unified roles to Claude Code entry shape (plain string vs block array).
