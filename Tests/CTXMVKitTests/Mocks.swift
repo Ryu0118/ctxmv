@@ -99,6 +99,25 @@ enum TestFixtures {
             .replacingOccurrences(of: "\n", with: "\\n")
     }
 
+    /// Creates a real `logical -> physical` symlinked project layout in a fresh temp directory.
+    ///
+    /// Alias resolution resolves symlinks against the filesystem, so these tests use real on-disk
+    /// symlinks. `cleanup` removes the temp tree; call it from a `defer`.
+    static func makeSymlinkedProject() throws -> (physical: String, logical: String, cleanup: () -> Void) {
+        let base = URL(filePath: NSTemporaryDirectory())
+            .appendingPathComponent("ctxmv-symlink-\(UUID().uuidString)")
+        let physicalParent = base.appendingPathComponent("physical")
+        let project = physicalParent.appendingPathComponent("proj")
+        try FileManager.default.createDirectory(at: project, withIntermediateDirectories: true)
+
+        let logicalParent = base.appendingPathComponent("logical")
+        try FileManager.default.createSymbolicLink(at: logicalParent, withDestinationURL: physicalParent)
+
+        let physical = project.resolvingSymlinksInPath().standardizedFileURL.path
+        let logical = logicalParent.appendingPathComponent("proj").path
+        return (physical, logical, { try? FileManager.default.removeItem(at: base) })
+    }
+
     /// Produces a normalized conversation with stable timestamps and a default project path.
     static func makeConversation(
         id: String = "test-session",

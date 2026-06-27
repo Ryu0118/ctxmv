@@ -83,7 +83,9 @@ package struct MigrateRunner {
     /// Selects the migrator matching the requested target agent.
     private func buildMigrator() -> any SessionMigrator {
         switch target {
-        case .claudeCode: ClaudeCodeMigrator()
+        // `PWD` is the shell's logical cwd (symlinks preserved); reading it here keeps env access
+        // at the CLI boundary rather than inside the migrator. See ``ClaudeProjectAliasResolver``.
+        case .claudeCode: ClaudeCodeMigrator(logicalCwd: ProcessInfo.processInfo.environment["PWD"])
         case .codex: CodexMigrator()
         case .cursor: CursorMigrator()
         }

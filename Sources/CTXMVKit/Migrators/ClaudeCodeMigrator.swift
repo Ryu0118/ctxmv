@@ -6,36 +6,35 @@ struct ClaudeCodeMigrator: SessionMigrator {
 
     private let fileSystem: any FileSystemProtocol
     private let projectPath: String?
-    private let environment: [String: String]
+    /// The shell's logical working directory (`PWD`), read at the CLI boundary. When it is a symlink
+    /// alias of the resolved project path, the session is also written to its bucket. See ``migrate(_:)``.
+    private let logicalCwd: String?
 
     init(
         fileSystem: any FileSystemProtocol = DefaultFileSystem(),
         projectPath: String? = nil,
-        environment: [String: String] = ProcessInfo.processInfo.environment
+        logicalCwd: String? = nil
     ) {
         self.fileSystem = fileSystem
         self.projectPath = projectPath
-        self.environment = environment
+        self.logicalCwd = logicalCwd
     }
 
     /// Writes the conversation into Claude Code's project-scoped session store.
     ///
     /// When the project path is reachable through a symlink alias (e.g. `~/work -> /Volumes/Disk/work`),
-    /// the session is written to *every* aliased project bucket. Claude Code resolves `--resume` against
+    /// the session is written to *both* aliased project buckets. Claude Code resolves `--resume` against
     /// the current working directory, so this lets resume succeed whether the user `cd`s into the logical
     /// or the physical path. See ``ClaudeProjectAliasResolver``.
     func migrate(_ conversation: UnifiedConversation) throws -> MigrationResult {
         guard !conversation.messages.isEmpty else {
             throw MigrationError.sessionEmpty
         }
-
-        let projectDirs = projectDirectories(for: conversation)
-        let origin = MigrationOrigin(
-            originId: conversation.id,
-            originSource: conversation.source,
-            originMessageCount: conversation.messages.count,
-            originDigest: MigrationDeduplicator.originDigest(for: conversation)
-        )
+        let projectDirs = projectDirectories(forCwd: resolvedCwd(for: conversation))
+        guard let primaryDir = projectDirs.first else {
+            throw MigrationError.writeFailed("No Claude Code project directory resolved")
+        }
+        let origin = migrationOrigin(for: conversation)
 
         // Dedup across every bucket so a re-migration does not write into one alias while
         // throwing on another.
@@ -51,38 +50,31 @@ struct ClaudeCodeMigrator: SessionMigrator {
         }
 
         let sessionId = UUID().uuidString.lowercased()
-        let jsonlContent = jsonl(for: conversation, sessionId: sessionId)
-        guard let data = jsonlContent.data(using: .utf8) else {
+        guard let data = jsonl(for: conversation, sessionId: sessionId).data(using: .utf8) else {
             throw MigrationError.writeFailed("Failed to encode JSONL as UTF-8")
         }
 
-        var primaryPath: String?
         for dir in projectDirs {
             try fileSystem.createDirectory(at: dir, withIntermediateDirectories: true, attributes: nil)
             let fileURL = dir.appendingPathComponent("\(sessionId).jsonl")
             _ = fileSystem.createFile(atPath: fileURL.path, contents: data, attributes: nil)
             logger.info("💾 Wrote Claude Code session messages=\(conversation.messages.count) path=\(fileURL.path)")
-            if primaryPath == nil { primaryPath = fileURL.path }
         }
 
-        guard let primaryPath else {
-            throw MigrationError.writeFailed("No Claude Code project directory resolved")
-        }
+        let primaryPath = primaryDir.appendingPathComponent("\(sessionId).jsonl").path
         return .written(path: primaryPath, sessionID: sessionId)
     }
 
-    /// Resolves the project bucket(s) to write the session into.
-    ///
-    /// Always includes the primary (physical) bucket. When `PWD` is a symlink alias of that path,
-    /// the aliased logical bucket is appended so resume works from either cwd.
-    func projectDirectories(for conversation: UnifiedConversation) -> [URL] {
-        let cwd = projectPath ?? conversation.projectPath ?? FileManager.default.currentDirectoryPath
-        var paths = [cwd]
-        paths.append(contentsOf: ClaudeProjectAliasResolver.aliasPaths(
-            forPhysicalPath: cwd,
-            environment: environment
-        ))
-        return paths.map(projectDirectory(forPath:))
+    /// The resolved physical working directory the session belongs to.
+    private func resolvedCwd(for conversation: UnifiedConversation) -> String {
+        projectPath ?? conversation.projectPath ?? FileManager.default.currentDirectoryPath
+    }
+
+    /// Resolves the project bucket(s) to write the session into: the physical bucket, plus the
+    /// symlink-aliased logical bucket when `logicalCwd` is an alias of `cwd`.
+    func projectDirectories(forCwd cwd: String) -> [URL] {
+        let alias = ClaudeProjectAliasResolver.alias(forPhysicalPath: cwd, logicalCwd: logicalCwd)
+        return ([cwd] + (alias.map { [$0] } ?? [])).map(projectDirectory(forPath:))
     }
 
     /// Maps an absolute project path to its `.claude/projects/<encoded>` directory.
