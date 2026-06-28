@@ -5,9 +5,9 @@ targets:
   assetName: swiftformat.artifactbundle.zip
   checksum: 47f7932f35c714b00430f56df1cfaf1bea0b4baae299bb2a09874cb52ee45350
 - reference: realm/SwiftLint
-  version: 0.64.1
+  version: 0.65.0
   assetName: SwiftLintBinary.artifactbundle.zip
-  checksum: e04529befaa6d3c50d7acdb28cdfa61b3788d99da94a1bfc1132f267a94679b6
+  checksum: eb333bd76dfb5f46d21fdf3615fe39bb938956ca0b8e94c241c4b2db6e696b90
 - reference: Ryu0118/gitnagg
   version: 0.3.0
   assetName: gitnagg-0.3.0.artifactbundle.zip
