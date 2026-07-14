@@ -51,7 +51,7 @@ nest install Ryu0118/ctxmv
 #### Mise ([jdx/mise](https://github.com/jdx/mise))
 
 ```bash
-mise use -g ubi:Ryu0118/ctxmv
+mise use -g github:Ryu0118/ctxmv
 ```
 
 #### Build from source
