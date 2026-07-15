@@ -9,7 +9,7 @@ rules:
   doc: README.md
   message: CLI command surface changed — update README (Usage section) if commands,
     options, or supported agents changed.
-  checksum: 8acdf8ee1a41632b763c08e791787a4ab1faf272ba94f5befda64c68672353be
+  checksum: f6810e62af11807afba6ebd08d6bb8c57ad94f3921d156f77a59ebf48aa7ae60
 - name: readme-migrators
   sources:
   - Sources/CTXMVKit/Migrators/ClaudeCodeMigrator.swift
