@@ -138,12 +138,7 @@ struct KimiCodeMigrator: SessionMigrator {
 
     private func decodeMeta(from data: Data) -> MigrationMeta? {
         struct Envelope: Decodable {
-            struct Custom: Decodable {
-                let ctxmvMigration: MigrationMeta?
-                enum CodingKeys: String, CodingKey { case ctxmvMigration = "ctxmv_migration" }
-            }
-
-            let custom: Custom?
+            let custom: KimiCodeCustomMeta?
         }
         return (try? MigratorUtils.jsonDecoder.decode(Envelope.self, from: data))?.custom?.ctxmvMigration
     }

@@ -163,7 +163,7 @@ struct KimiCodeWireBuilder {
             isCustomTitle: false,
             lastPrompt: prompts.last ?? "",
             agents: [WireFormat.mainAgent: AgentEntry(homedir: homedir)],
-            custom: CustomMeta(ctxmvMigration: meta),
+            custom: KimiCodeCustomMeta(ctxmvMigration: meta),
             workDir: workDir
         )
         return MigratorUtils.encodeLine(state) ?? "{}"
@@ -238,11 +238,19 @@ private struct ContentPart: Encodable {
     let part: Part
 }
 
-/// Wraps a `step.begin` or `content.part` under the `event` key; custom encoding flattens the payload enum.
+/// Wraps a `step.begin` or `content.part` under the `event` key; both payload cases are `Encodable`,
+/// so the case's associated value is boxed as `any Encodable` rather than switched over to encode it.
 private struct LoopEvent: Encodable {
     enum Payload {
         case stepBegin(StepBegin)
         case contentPart(ContentPart)
+
+        var boxed: any Encodable {
+            switch self {
+            case let .stepBegin(value): value
+            case let .contentPart(value): value
+            }
+        }
     }
 
     let type: String = WireType.appendLoopEvent.rawValue
@@ -255,10 +263,7 @@ private struct LoopEvent: Encodable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(type, forKey: .type)
         try container.encode(time, forKey: .time)
-        switch event {
-        case let .stepBegin(value): try container.encode(value, forKey: .event)
-        case let .contentPart(value): try container.encode(value, forKey: .event)
-        }
+        try container.encode(event.boxed, forKey: .event)
     }
 }
 
@@ -278,8 +283,10 @@ private struct AgentEntry: Encodable {
     }
 }
 
-private struct CustomMeta: Encodable {
-    let ctxmvMigration: MigrationMeta
+/// The `custom` field of `state.json`. `Codable` so `KimiCodeMigrator`'s dedup scan can decode
+/// the same shape this file encodes, instead of re-declaring it.
+struct KimiCodeCustomMeta: Codable {
+    let ctxmvMigration: MigrationMeta?
 
     enum CodingKeys: String, CodingKey {
         case ctxmvMigration = "ctxmv_migration"
@@ -293,6 +300,6 @@ private struct StateFile: Encodable {
     let isCustomTitle: Bool
     let lastPrompt: String
     let agents: [String: AgentEntry]
-    let custom: CustomMeta
+    let custom: KimiCodeCustomMeta
     let workDir: String
 }
