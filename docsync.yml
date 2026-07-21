@@ -21,7 +21,7 @@ rules:
   doc: README.md
   message: "Migrator logic or supported agents changed \u2014 update README if supported
     migration paths changed."
-  checksum: cc6d67bab1503048ec2ec42fd7167ca9a5d59e2d5f2f6a2f56ec156c7c9e3405
+  checksum: fb60d76186ce85c0e30ec12a11be24a205895fc1fa34e0bbe4cccd9202cfc4b4
 - name: agents-claude
   sources:
   - Package.swift
@@ -36,4 +36,4 @@ rules:
   doc: CLAUDE.md
   message: "Session storage format or path resolution changed \u2014 update CLAUDE.md
     if architecture or storage path docs are affected."
-  checksum: 2736e728d9e3d3eb58b3c9b09681a3a38f6586a0f9c35f0a36c0f9762793588e
+  checksum: c7f20e9d9ecd99c0a803351076ed2aa9396b422848978399826fb7388075e604

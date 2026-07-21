@@ -63,9 +63,9 @@ struct KimiCodeMigrator: SessionMigrator {
         try fileSystem.createDirectory(at: mainDir, withIntermediateDirectories: true, attributes: nil)
         try write(doc.stateJSON, to: sessionDir.appendingPathComponent(Constants.stateFile))
         try write(doc.wireJSONL, to: mainDir.appendingPathComponent(Constants.wireFile))
-        // The index append is the commit point: dedup and kimi's listing are index-driven,
-        // so an earlier failure leaves only an invisible unindexed orphan.
         try writeData(updatedWorkspaces, to: kimiBase().appendingPathComponent(Constants.workspacesFile))
+        // The index append is the commit point: dedup and kimi's listing are index-driven,
+        // so a failure before this line leaves only an invisible unindexed orphan.
         try appendIndexLine(sessionId: sessionId, sessionDir: sessionDir, root: root)
 
         logger.info("💾 Wrote kimi-code session messages=\(conversation.messages.count) path=\(sessionDir.path)")
