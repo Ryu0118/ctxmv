@@ -124,7 +124,7 @@ struct KimiCodeMigrator: SessionMigrator {
 
         for line in text.split(separator: "\n") {
             guard let entryData = line.data(using: .utf8),
-                  let entry = try? JSONDecoder().decode(KimiCodeWorkspace.IndexEntry.self, from: entryData)
+                  let entry = try? MigratorUtils.jsonDecoder.decode(KimiCodeWorkspace.IndexEntry.self, from: entryData)
             else { continue }
             let stateFile = URL(fileURLWithPath: entry.sessionDir).appendingPathComponent(Constants.stateFile)
             guard let stateData = fileSystem.contents(atPath: stateFile.path),
@@ -145,6 +145,6 @@ struct KimiCodeMigrator: SessionMigrator {
 
             let custom: Custom?
         }
-        return (try? JSONDecoder().decode(Envelope.self, from: data))?.custom?.ctxmvMigration
+        return (try? MigratorUtils.jsonDecoder.decode(Envelope.self, from: data))?.custom?.ctxmvMigration
     }
 }
