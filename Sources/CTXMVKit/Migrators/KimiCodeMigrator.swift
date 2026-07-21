@@ -81,10 +81,7 @@ struct KimiCodeMigrator: SessionMigrator {
     }
 
     private func write(_ contents: String, to file: URL) throws {
-        guard let data = contents.data(using: .utf8) else {
-            throw MigrationError.writeFailed("Failed to encode \(file.lastPathComponent) as UTF-8")
-        }
-        try writeData(data, to: file)
+        try writeData(Data(contents.utf8), to: file)
     }
 
     private func writeData(_ data: Data, to file: URL) throws {

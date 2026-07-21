@@ -14,6 +14,8 @@ enum MigratorUtils {
         return encoder
     }()
 
+    static let jsonDecoder = JSONDecoder()
+
     static func hexString(_ data: Data) -> String {
         data.map { String(format: "%02x", $0) }.joined()
     }

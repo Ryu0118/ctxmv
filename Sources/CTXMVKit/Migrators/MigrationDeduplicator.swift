@@ -52,8 +52,6 @@ private struct ClaudeProgressMetaLine: Codable {
 
 /// Detects whether a conversation snapshot has already been migrated.
 enum MigrationDeduplicator {
-    private static let decoder = JSONDecoder()
-
     /// Prefer the full-history digest; for legacy markers with no digest, fall back to message-count equality.
     static func matches(_ meta: MigrationMeta, _ origin: MigrationOrigin) -> Bool {
         guard meta.originId == origin.originId,
@@ -183,13 +181,13 @@ enum MigrationDeduplicator {
             guard !line.isEmpty, let lineData = line.data(using: .utf8) else { continue }
 
             if allowBareMetaLine,
-               let meta = try? decoder.decode(MigrationMeta.self, from: lineData),
+               let meta = try? MigratorUtils.jsonDecoder.decode(MigrationMeta.self, from: lineData),
                meta.type == MigrationMeta.migrationType
             {
                 return meta
             }
 
-            if let wrapped = try? decoder.decode(ClaudeProgressMetaLine.self, from: lineData),
+            if let wrapped = try? MigratorUtils.jsonDecoder.decode(ClaudeProgressMetaLine.self, from: lineData),
                wrapped.data.type == MigrationMeta.migrationType
             {
                 return wrapped.data
