@@ -150,6 +150,12 @@ struct KimiCodeWireBuilder {
             .filter { !$0.isEmpty && !MessageFilter.isNoise($0) }
         let homedir = sessionDirPath + "/" + Self.mainAgentPath
 
+        // Deliberately kimi-code's v1 state.json shape (ISO createdAt/updatedAt, `workDir` key, no
+        // `id`/`version`/`archived`). Current kimi (`sessionMetaSchema`) uses epoch-ms + `cwd` instead,
+        // but `FileSessionIndex`'s reader treats an absent `version` field as v1 and normalizes both
+        // representations to epoch-ms on read — so v1 round-trips through current kimi without loss.
+        // Writing v1 also keeps this in sync with AgentSessions' KimiCodeSessionReader, which parses
+        // `createdAt` as a `String?` and reads `workDir`, not `cwd`.
         let state = StateFile(
             createdAt: created,
             updatedAt: created,
