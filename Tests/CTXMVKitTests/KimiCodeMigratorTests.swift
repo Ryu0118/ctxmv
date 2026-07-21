@@ -7,26 +7,45 @@ struct KimiCodeMigratorTests {
         KimiCodeMigrator(fileSystem: mockFS)
     }
 
-    @Test("migrate writes state.json, wire.jsonl, and appends the session index")
-    func migrateWritesFiles() throws {
+    /// Shared arrange+act step for the `migrateWritesFiles*` tests below: one migrated
+    /// session, each test then asserts a single facet of what got written.
+    private func makeMigratedSession() throws -> (mockFS: MockFileManager, path: String, sessionID: String) {
         let mockFS = MockFileManager()
         mockFS.homeDirectoryForCurrentUser = URL(fileURLWithPath: "/Users/tester")
         let convo = TestFixtures.makeConversation(id: "src-1", source: .claudeCode, projectPath: "/proj")
 
-        let result = try makeMigrator(mockFS).migrate(convo)
-        guard case let .written(path, sessionID) = result else {
-            Issue.record("expected .written"); return
+        guard case let .written(path, sessionID) = try makeMigrator(mockFS).migrate(convo) else {
+            Issue.record("expected .written")
+            throw MigrationError.writeFailed("test setup failed")
         }
+        return (mockFS, path, sessionID)
+    }
+
+    @Test("migrate names the session with a session_ prefix and paths it under that ID")
+    func migrateWritesFilesSessionIDAndPath() throws {
+        let (_, path, sessionID) = try makeMigratedSession()
         #expect(sessionID.hasPrefix("session_"))
         #expect(path.hasSuffix(sessionID))
+    }
 
+    @Test("migrate writes state.json and wire.jsonl into the session directory")
+    func migrateWritesFilesStateAndWire() throws {
+        let (mockFS, path, _) = try makeMigratedSession()
         #expect(mockFS.files[path + "/state.json"] != nil)
         #expect(mockFS.files[path + "/agents/main/wire.jsonl"] != nil)
+    }
 
+    @Test("migrate appends the new session ID to session_index.jsonl")
+    func migrateWritesFilesAppendsSessionIndex() throws {
+        let (mockFS, _, sessionID) = try makeMigratedSession()
         let indexPath = "/Users/tester/.kimi-code/session_index.jsonl"
         let index = try #require(mockFS.files[indexPath]).flatMap { String(data: $0, encoding: .utf8) }
         #expect(index?.contains(sessionID) == true)
+    }
 
+    @Test("migrate registers the workspace under a wd_<basename>_<hash> key")
+    func migrateWritesFilesRegistersWorkspace() throws {
+        let (mockFS, _, _) = try makeMigratedSession()
         let wsPath = "/Users/tester/.kimi-code/workspaces.json"
         let wsData = try #require(mockFS.files[wsPath])
         let wsObject = try #require((try? JSONSerialization.jsonObject(with: wsData)) as? [String: Any])
@@ -43,14 +62,13 @@ struct KimiCodeMigratorTests {
         let first = try makeMigrator(mockFS).migrate(convo)
         guard case let .written(firstPath, _) = first else { Issue.record("expected .written"); return }
 
-        #expect(throws: MigrationError.self) {
+        let error = #expect(throws: MigrationError.self) {
             try makeMigrator(mockFS).migrate(convo)
         }
-        do {
-            _ = try makeMigrator(mockFS).migrate(convo)
-        } catch let MigrationError.alreadyMigrated(existingPath) {
-            #expect(existingPath == firstPath)
+        guard case let .alreadyMigrated(existingPath) = error else {
+            Issue.record("expected .alreadyMigrated"); return
         }
+        #expect(existingPath == firstPath)
     }
 
     @Test("re-migrating an updated source (different content/digest) is allowed and writes a second session")
