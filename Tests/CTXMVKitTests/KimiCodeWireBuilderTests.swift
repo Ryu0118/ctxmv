@@ -9,8 +9,9 @@ struct KimiCodeWireBuilderTests {
         }
     }
 
-    @Test("wire.jsonl carries metadata, a user turn.prompt+append_message, and a turnId-linked assistant turn")
-    func buildsWire() throws {
+    /// Shared arrange+act step for the `buildsWire*` tests below: one two-message
+    /// conversation built into wire lines, each test then asserts a single event.
+    private func makeWireLines() -> [[String: Any]] {
         let convo = TestFixtures.makeConversation(
             id: "kimi-build",
             source: .claudeCode,
@@ -20,33 +21,47 @@ struct KimiCodeWireBuilderTests {
                 UnifiedMessage(role: .assistant, content: "Hello!", timestamp: TestFixtures.sampleDate),
             ]
         )
-        let builder = KimiCodeWireBuilder()
-        let doc = builder.makeDocument(
+        let doc = KimiCodeWireBuilder().makeDocument(
             conversation: convo,
             sessionId: "session_abc",
             sessionDirPath: "/home/.kimi-code/sessions/wd_project_deadbeef0000/session_abc",
             workDir: "/mock/project"
         )
-        let lines = decodeLines(doc.wireJSONL)
+        return decodeLines(doc.wireJSONL)
+    }
 
+    @Test("wire.jsonl opens with a metadata record carrying the protocol version")
+    func buildsWireMetadata() {
+        let lines = makeWireLines()
         #expect(lines.first?["type"] as? String == "metadata")
         #expect(lines.first?["protocol_version"] as? String == "1.4")
+    }
 
-        let prompt = try #require(lines.first { $0["type"] as? String == "turn.prompt" })
+    @Test("a user message becomes a turn.prompt with origin.kind=user")
+    func buildsWireTurnPrompt() throws {
+        let prompt = try #require(makeWireLines().first { $0["type"] as? String == "turn.prompt" })
         let promptOrigin = prompt["origin"] as? [String: Any]
         #expect(promptOrigin?["kind"] as? String == "user")
+    }
 
-        let appendMsg = try #require(lines.first { $0["type"] as? String == "context.append_message" })
+    @Test("a user message also becomes a context.append_message with origin.kind=user")
+    func buildsWireAppendMessage() throws {
+        let appendMsg = try #require(makeWireLines().first { $0["type"] as? String == "context.append_message" })
         let message = appendMsg["message"] as? [String: Any]
         #expect(message?["role"] as? String == "user")
         #expect((message?["origin"] as? [String: Any])?["kind"] as? String == "user")
+    }
 
-        let loopEvents = lines.filter { $0["type"] as? String == "context.append_loop_event" }
+    @Test("an assistant message becomes a turnId-linked step.begin + content.part pair")
+    func buildsWireAssistantLoopEvents() throws {
+        let loopEvents = makeWireLines().filter { $0["type"] as? String == "context.append_loop_event" }
         #expect(loopEvents.count == 2) // step.begin + content.part(text)
+
         let stepBegin = try #require(loopEvents.first)
         let stepEvent = stepBegin["event"] as? [String: Any]
         #expect(stepEvent?["type"] as? String == "step.begin")
         #expect(stepEvent?["turnId"] as? String == "0")
+
         let partEvent = (loopEvents.last?["event"]) as? [String: Any]
         #expect(partEvent?["turnId"] as? String == "0")
         #expect(partEvent?["stepUuid"] as? String == stepEvent?["uuid"] as? String)
