@@ -13,6 +13,22 @@ struct KimiCodeWorkspaceTests {
         )
     }
 
+    /// kimi-code's `slugifyWorkDirName` lowercases and collapses non-`[a-z0-9._-]` runs to `-` before
+    /// hashing the (separately normalized) path — a raw basename would mint a different bucket.
+    @Test(
+        "workspaceId slugifies the basename (lowercase, non-alphanumeric collapsed) before hashing",
+        arguments: [
+            (root: "/Users/x/MyApp", expectedSlug: "myapp"),
+            (root: "/Users/x/My App", expectedSlug: "my-app"),
+            (root: "/Users/x/日本語", expectedSlug: "workspace"),
+            (root: "/Users/x/", expectedSlug: "x"),
+        ]
+    )
+    func workspaceIdSlugifiesBasename(root: String, expectedSlug: String) {
+        let workspaceId = KimiCodeWorkspace.workspaceId(forRoot: root)
+        #expect(workspaceId.hasPrefix("wd_\(expectedSlug)_"))
+    }
+
     @Test("upsertWorkspaces preserves version, existing workspaces, and deleted_workspace_ids")
     func upsertPreservesExisting() throws {
         // swiftlint:disable line_length
