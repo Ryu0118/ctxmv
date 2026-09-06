@@ -1,21 +1,21 @@
 nestPath: ./.nest
 targets:
 - reference: nicklockwood/SwiftFormat
-  version: 0.62.1
+  version: 0.63.0
   assetName: swiftformat.artifactbundle.zip
-  checksum: 6595f3121e657438a24dabd9f8fecb648d3f362e5106df0968f734f5863fe404
+  checksum: d3c350a6655c0f687e2c23aac3e777b35345313a6428bb36b915fe7d9840ec78
 - reference: realm/SwiftLint
-  version: 0.65.0
+  version: 0.65.1
   assetName: SwiftLintBinary.artifactbundle.zip
-  checksum: eb333bd76dfb5f46d21fdf3615fe39bb938956ca0b8e94c241c4b2db6e696b90
+  checksum: c3a1d77647ca18c1b7e9be7dbc6cd4490d26422f28814b76370244ff61970869
 - reference: Ryu0118/gitnagg
   version: 0.3.0
   assetName: gitnagg-0.3.0.artifactbundle.zip
   checksum: 1a320a35e981e91efc035b4b2f7016d0e19c0afb51b7c62ba4154dc4c5ad1c75
 - reference: Ryu0118/my-swift-linter
-  version: 0.12.3
-  assetName: my-swift-linter-0.12.3.artifactbundle.zip
-  checksum: f542863250f5cbe8534df184b73fa0c3d1ff4b0fbe91d6f89643e7f3c8b3e16e
+  version: 0.13.0
+  assetName: my-swift-linter-0.13.0.artifactbundle.zip
+  checksum: acf69f45a6b7ea88275bc7c3766c993f4d5e1fa3c74a80f6c68641ddfbd7c7af
 - reference: Ryu0118/docsync
   version: 0.3.1
   assetName: docsync-0.3.1.artifactbundle.zip
