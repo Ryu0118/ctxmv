@@ -39,7 +39,7 @@ struct KimiCodeMigratorTests {
     func migrateWritesFilesAppendsSessionIndex() throws {
         let (mockFS, _, sessionID) = try makeMigratedSession()
         let indexPath = "/Users/tester/.kimi-code/session_index.jsonl"
-        let index = try #require(mockFS.files[indexPath]).flatMap { String(data: $0, encoding: .utf8) }
+        let index = mockFS.files[indexPath].flatMap { String(data: $0, encoding: .utf8) }
         #expect(index?.contains(sessionID) == true)
     }
 
