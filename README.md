@@ -14,7 +14,7 @@
 
 ## Features
 
-- 🔀 Migrate sessions between any pair of agents (resume-compatible)
+- 🔀 Migrate sessions between supported agents (resume-compatible)
 - 📋 List sessions across all agents in a unified table
 - 💬 Show conversation messages with role-colored output
 
@@ -90,7 +90,7 @@ After migration, the tool prints the resume command:
 ```
 ✅ Session written to: /path/to/session
 To resume:
-  cd /your/project
+  cd -- '/your/project'
   codex resume <new-session-id>
 ```
 
