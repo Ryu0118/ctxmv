@@ -31,7 +31,7 @@ struct KimiCodeMigrator: SessionMigrator {
     func migrate(_ conversation: UnifiedConversation) throws -> MigrationResult {
         guard !conversation.messages.isEmpty else { throw MigrationError.sessionEmpty }
 
-        let root = conversation.projectPath ?? workingDirectoryProvider()
+        let root = KimiCodeWorkspace.canonicalRoot(conversation.projectPath ?? workingDirectoryProvider())
         let origin = MigrationOrigin(
             originId: conversation.id,
             originSource: conversation.source,
@@ -110,7 +110,9 @@ struct KimiCodeMigrator: SessionMigrator {
             throw MigrationError.writeFailed("Failed to encode session index entry")
         }
         var indexText = fileSystem.contents(atPath: indexFile.path).flatMap { String(data: $0, encoding: .utf8) } ?? ""
-        if !indexText.isEmpty, !indexText.hasSuffix("\n") { indexText += "\n" }
+        if !indexText.isEmpty, !indexText.hasSuffix("\n") {
+            indexText += "\n"
+        }
         indexText += line + "\n"
         try write(indexText, to: indexFile)
     }
