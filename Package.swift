@@ -17,7 +17,7 @@ let package = Package(
         .package(url: "https://github.com/onevcat/Rainbow.git", from: "4.0.1"),
         .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
         .package(url: "https://github.com/apple/swift-async-algorithms.git", from: "1.1.3"),
-        .package(url: "https://github.com/Ryu0118/AgentSessions.git", revision: "01a531a5b96a89f4598733b58bc56f77722c2c00"),
+        .package(url: "https://github.com/Ryu0118/AgentSessions.git", revision: "fa633e52fed11b5e274f1e4f4e4594c9200192cd"),
     ],
     targets: [
         .executableTarget(
