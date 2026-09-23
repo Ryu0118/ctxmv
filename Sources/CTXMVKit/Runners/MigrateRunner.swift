@@ -5,7 +5,7 @@ import Rainbow
 /// Finds a session, migrates it to a target agent format, and prints resume instructions.
 package struct MigrateRunner {
     private let sessionID: String
-    private let target: AgentSource
+    private let target: MigrationTarget
     private let source: AgentSource?
 
     private let readers: [any SessionReader]
@@ -14,7 +14,7 @@ package struct MigrateRunner {
     /// Creates a runner using the default file system and SQLite provider.
     package init(
         sessionID: String,
-        target: AgentSource,
+        target: MigrationTarget,
         source: AgentSource? = nil,
         fileSystem: any FileSystemProtocol = DefaultFileSystem(),
         sqlite: any SQLiteReader = DefaultSQLiteReader()
@@ -29,7 +29,7 @@ package struct MigrateRunner {
     /// Creates a runner with injected readers for tests.
     package init(
         sessionID: String,
-        target: AgentSource,
+        target: MigrationTarget,
         source: AgentSource? = nil,
         readers: [any SessionReader],
         fileSystem: any FileSystemProtocol = DefaultFileSystem()
@@ -85,9 +85,12 @@ package struct MigrateRunner {
         switch target {
         // `PWD` is the shell's logical cwd (symlinks preserved); reading it here keeps env access
         // at the CLI boundary rather than inside the migrator. See ``ClaudeProjectAliasResolver``.
-        case .claudeCode: ClaudeCodeMigrator(logicalCwd: ProcessInfo.processInfo.environment["PWD"])
-        case .codex: CodexMigrator()
-        case .cursor: CursorMigrator()
+        case .claudeCode: ClaudeCodeMigrator(
+                fileSystem: fileSystem,
+                logicalCwd: ProcessInfo.processInfo.environment["PWD"]
+            )
+        case .codex: CodexMigrator(fileSystem: fileSystem)
+        case .cursor: CursorMigrator(fileSystem: fileSystem)
         // Same `PWD` rationale as above: kimi's workspace id hashes the root path.
         case .kimiCode: KimiCodeMigrator(
                 fileSystem: fileSystem,

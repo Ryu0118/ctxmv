@@ -17,7 +17,7 @@ public struct CTXMVCommand: AsyncParsableCommand {
         abstract: "Migrate sessions between AI coding agents",
         discussion: """
         Default action (no subcommand): migrate a session.
-        Example: ctxmv <session-id> --to <claude-code|codex|cursor>
+        Example: ctxmv <session-id> --to <\(MigrationTarget.allCases.map(\.rawValue).joined(separator: "|"))>
         """,
         version: CTXMVVersion.current,
         subcommands: [MigrateCommand.self, ListCommand.self, ShowCommand.self],

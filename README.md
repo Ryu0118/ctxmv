@@ -24,6 +24,7 @@
 - Codex
 - Cursor (CLI agent via `cursor-agent`, not the GUI app)
 - Kimi Code (`kimi` CLI)
+- GitHub Copilot CLI (source)
 
 ## Install
 
@@ -79,6 +80,9 @@ ctxmv <session-id> --to cursor
 
 # Any → Kimi Code
 ctxmv <session-id> --to kimi-code
+
+# GitHub Copilot CLI → Codex
+ctxmv <session-id> --from copilot-cli --to codex
 ```
 
 After migration, the tool prints the resume command:
@@ -102,6 +106,7 @@ ctxmv list
 ctxmv list --source claude-code
 ctxmv list --source codex
 ctxmv list --source cursor
+ctxmv list --source copilot-cli
 
 # Filter by project path
 ctxmv list --project /path/to/project
@@ -118,6 +123,7 @@ ctxmv show <session-id>
 
 # Restrict search to a specific agent
 ctxmv show <session-id> --source claude-code
+ctxmv show <session-id> --source copilot-cli
 
 # Show raw content without compacting XML-like blocks
 ctxmv show <session-id> --raw

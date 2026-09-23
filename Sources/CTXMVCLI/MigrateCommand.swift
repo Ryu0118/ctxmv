@@ -12,10 +12,10 @@ struct MigrateCommand: AsyncParsableCommand {
     @Argument(help: "Session ID to migrate")
     var sessionID: String
 
-    @Option(name: .customLong("to"), help: "Target agent: claude-code, codex, cursor, or kimi-code")
-    var target: AgentSource
+    @Option(name: .customLong("to"), help: "Target agent: \(MigrationTarget.allCases.map(\.rawValue).joined(separator: ", "))")
+    var target: MigrationTarget
 
-    @Option(name: .customLong("from"), help: "Source agent: claude-code, codex, cursor, or kimi-code")
+    @Option(name: .customLong("from"), help: "Source agent: \(AgentSource.allCases.map(\.rawValue).joined(separator: ", "))")
     var source: AgentSource?
 
     @OptionGroup var options: GlobalOptions

@@ -153,6 +153,7 @@ package struct ListRunner {
         case .codex: .green
         case .cursor: .magenta
         case .kimiCode: .blue
+        case .copilotCLI: .yellow
         }
     }
 }
