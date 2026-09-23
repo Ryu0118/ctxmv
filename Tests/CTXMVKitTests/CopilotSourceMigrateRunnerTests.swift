@@ -8,6 +8,13 @@ struct CopilotSourceMigrateRunnerTests {
     private static let userPrompt = "Synthetic Copilot user prompt"
     private static let assistantResponse = "Synthetic Copilot assistant response"
 
+    @Test("shell-quotes workspace paths before printing resume hints")
+    func shellQuotesWorkspacePath() {
+        let path = "/tmp/project'; echo injected; #"
+
+        #expect(MigrateRunner.shellQuoted(path) == "'/tmp/project'\\''; echo injected; #'")
+    }
+
     @Test(
         "MigrateRunner discovers Copilot CLI sessions and writes resumable targets",
         arguments: [MigrationTarget.claudeCode, .codex, .kimiCode]

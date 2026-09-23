@@ -118,7 +118,7 @@ package struct MigrateRunner {
         case .codex, .cursor, .kimiCode:
             resolvedProjectPath
         }
-        let cwdLine = cwdForHint.map { "  cd \($0)\n" } ?? ""
+        let cwdLine = cwdForHint.map { "  cd -- \(Self.shellQuoted($0))\n" } ?? ""
         let claudeCwdNote = """
         ⚠️ Claude Code resolves sessions by current working directory (~/.claude/projects/<encoded cwd>/).
            Running `claude` from a different project folder will not find this session.
@@ -156,6 +156,11 @@ package struct MigrateRunner {
         case .cursor: "cursor-agent --resume \(sessionID)"
         case .kimiCode: "kimi --session \(sessionID)"
         }
+    }
+
+    /// Quotes one argument for the shell command hints printed by the CLI.
+    package static func shellQuoted(_ argument: String) -> String {
+        "'\(argument.replacingOccurrences(of: "'", with: "'\\''"))'"
     }
 
     /// Derives the resumable session ID from the storage path format of each target agent.
