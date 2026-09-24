@@ -1,7 +1,7 @@
 import Foundation
 
 /// Imports a semantic transcript through the supported Copilot CLI interface.
-protocol CopilotSessionImporter: Sendable {
+package protocol CopilotSessionImporter: Sendable {
     func importSession(
         semanticJSONL: String,
         workingDirectory: String,
@@ -10,7 +10,7 @@ protocol CopilotSessionImporter: Sendable {
 }
 
 /// Runs `copilot sessions import` without a shell and stages transcripts with owner-only permissions.
-struct CopilotCommandSessionImporter: CopilotSessionImporter {
+package struct CopilotCommandSessionImporter: CopilotSessionImporter {
     private static let commandName = "copilot"
     private static let importedSessionName = "Migrated session"
     private static let minimumCLIMessage = "Install or update GitHub Copilot CLI to version 1.0.85 or newer."
@@ -25,7 +25,9 @@ struct CopilotCommandSessionImporter: CopilotSessionImporter {
         }
     }
 
-    func importSession(
+    package init() {}
+
+    package func importSession(
         semanticJSONL: String,
         workingDirectory: String,
         copilotHome: URL
