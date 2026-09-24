@@ -64,6 +64,43 @@ struct CopilotSourceMigrateRunnerTests {
         }
     }
 
+    @Test(
+        "Copilot event sessions load through AgentSessions and migrate into resumable targets",
+        arguments: [MigrationTarget.claudeCode, .codex, .kimiCode]
+    )
+    func readsAndMigratesCopilotSession(to target: MigrationTarget) async throws {
+        let fileSystem = makeFileSystem()
+        let copilotSource = AgentSource(rawValue: "copilot-cli")
+        #expect(copilotSource != nil)
+        guard let copilotSource else { return }
+
+        let runner = MigrateRunner(
+            sessionID: Self.sessionID,
+            target: target,
+            source: copilotSource,
+            fileSystem: fileSystem,
+            sqlite: MockSQLiteReader()
+        )
+
+        try await runner.run()
+
+        let destination = try #require(fileSystem.files.first { path, _ in
+            switch target {
+            case .claudeCode:
+                path.contains("/.claude/projects/") && path.hasSuffix(".jsonl")
+            case .codex:
+                path.contains("/.codex/sessions/") && path.hasSuffix(".jsonl")
+            case .kimiCode:
+                path.hasSuffix("/agents/main/wire.jsonl")
+            case .copilotCLI, .cursor:
+                false
+            }
+        })
+        let output = try #require(String(data: destination.value, encoding: .utf8))
+        #expect(output.contains(Self.userPrompt))
+        #expect(output.contains(Self.assistantResponse))
+    }
+
     private func makeFileSystem() -> MockFileManager {
         let fileSystem = MockFileManager()
         let home = URL(fileURLWithPath: "/Users/tester", isDirectory: true)
