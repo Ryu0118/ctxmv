@@ -46,25 +46,7 @@ struct CopilotCLIMigratorTests {
         #expect(importer.calls.count == 1)
         #expect(importer.calls[0].workingDirectory == projectPath)
         #expect(importer.calls[0].copilotHome == copilotHome)
-
-        var lines: [[String: Any]] = []
-        for line in importer.calls[0].semanticJSONL.split(separator: "\n") {
-            lines.append(try #require(JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any]))
-        }
-        let header = try #require(lines.first)
-        #expect(header["type"] as? String == "session")
-        #expect(header["version"] as? Int == 1)
-        #expect((header["externalId"] as? String)?.hasPrefix("ctxmv-") == true)
-        let source = try #require(header["source"] as? [String: Any])
-        #expect(source["application"] as? String == "ctxmv")
-
-        let messages = Array(lines.dropFirst())
-        #expect(messages.count == 3)
-        #expect(messages.compactMap { $0["role"] as? String } == ["user", "assistant", "user"])
-        let firstMessage = try #require(messages.first)
-        let firstContent = try #require(firstMessage["content"] as? [[String: Any]])
-        #expect(firstContent.first?["text"] as? String == "Synthetic question with a quote: \"hello\"\nsecond line")
-        #expect(!importer.calls[0].semanticJSONL.contains("Synthetic tool output"))
+        try assertSemanticJSONL(importer.calls[0].semanticJSONL)
 
         let markerData = try #require(
             fileSystem.files.first { $0.key.contains("/ctxmv-migrations/copilot-cli/") }?.value
@@ -210,6 +192,27 @@ struct CopilotCLIMigratorTests {
         #expect(fileSystem.files.keys.contains { $0.contains("/ctxmv-migrations/copilot-cli/") })
         #expect(importer.calls.count == 1)
         #expect(importer.calls[0].workingDirectory == projectPath)
+    }
+
+    private func assertSemanticJSONL(_ jsonl: String) throws {
+        var lines: [[String: Any]] = []
+        for line in jsonl.split(separator: "\n") {
+            lines.append(try #require(JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any]))
+        }
+        let header = try #require(lines.first)
+        #expect(header["type"] as? String == "session")
+        #expect(header["version"] as? Int == 1)
+        #expect((header["externalId"] as? String)?.hasPrefix("ctxmv-") == true)
+        let source = try #require(header["source"] as? [String: Any])
+        #expect(source["application"] as? String == "ctxmv")
+
+        let messages = Array(lines.dropFirst())
+        #expect(messages.count == 3)
+        #expect(messages.compactMap { $0["role"] as? String } == ["user", "assistant", "user"])
+        let firstMessage = try #require(messages.first)
+        let firstContent = try #require(firstMessage["content"] as? [[String: Any]])
+        #expect(firstContent.first?["text"] as? String == "Synthetic question with a quote: \"hello\"\nsecond line")
+        #expect(!jsonl.contains("Synthetic tool output"))
     }
 }
 

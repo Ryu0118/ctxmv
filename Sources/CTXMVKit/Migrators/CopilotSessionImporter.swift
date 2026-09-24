@@ -16,8 +16,13 @@ struct CopilotCommandSessionImporter: CopilotSessionImporter {
     private static let minimumCLIMessage = "Install or update GitHub Copilot CLI to version 1.0.85 or newer."
 
     private struct ImportOutput: Decodable {
-        let ok: Bool
+        let succeeded: Bool
         let sessionId: String?
+
+        private enum CodingKeys: String, CodingKey {
+            case succeeded = "ok"
+            case sessionId
+        }
     }
 
     func importSession(
@@ -35,7 +40,7 @@ struct CopilotCommandSessionImporter: CopilotSessionImporter {
         validationArguments.insert("--dry-run", at: 3)
         let validationOutput = try run(validationArguments, copilotHome: copilotHome)
         guard let validation = try? MigratorUtils.jsonDecoder.decode(ImportOutput.self, from: validationOutput),
-              validation.ok else {
+              validation.succeeded else {
             throw MigrationError.writeFailed("Copilot CLI rejected the session transcript. \(Self.minimumCLIMessage)")
         }
 
@@ -47,7 +52,7 @@ struct CopilotCommandSessionImporter: CopilotSessionImporter {
             copilotHome: copilotHome
         )
         guard let result = try? MigratorUtils.jsonDecoder.decode(ImportOutput.self, from: output),
-              result.ok,
+              result.succeeded,
               let sessionId = result.sessionId,
               let uuid = UUID(uuidString: sessionId) else {
             throw MigrationError.writeFailed("Copilot CLI did not return a valid imported session ID.")
