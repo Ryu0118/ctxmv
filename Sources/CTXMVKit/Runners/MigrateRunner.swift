@@ -10,6 +10,8 @@ package struct MigrateRunner {
 
     private let readers: [any SessionReader]
     private let fileSystem: any FileSystemProtocol
+    private let copilotSessionImporter: any CopilotSessionImporter
+    private let copilotHome: URL?
 
     /// Creates a runner using the default file system and SQLite provider.
     package init(
@@ -17,12 +19,16 @@ package struct MigrateRunner {
         target: MigrationTarget,
         source: AgentSource? = nil,
         fileSystem: any FileSystemProtocol = DefaultFileSystem(),
-        sqlite: any SQLiteReader = DefaultSQLiteReader()
+        sqlite: any SQLiteReader = DefaultSQLiteReader(),
+        copilotSessionImporter: any CopilotSessionImporter = CopilotCommandSessionImporter(),
+        copilotHome: URL? = nil
     ) {
         self.sessionID = sessionID
         self.target = target
         self.source = source
         self.fileSystem = fileSystem
+        self.copilotSessionImporter = copilotSessionImporter
+        self.copilotHome = Self.configuredCopilotHome(explicit: copilotHome)
         readers = SessionReaderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
     }
 
@@ -32,13 +38,17 @@ package struct MigrateRunner {
         target: MigrationTarget,
         source: AgentSource? = nil,
         readers: [any SessionReader],
-        fileSystem: any FileSystemProtocol = DefaultFileSystem()
+        fileSystem: any FileSystemProtocol = DefaultFileSystem(),
+        copilotSessionImporter: any CopilotSessionImporter = CopilotCommandSessionImporter(),
+        copilotHome: URL? = nil
     ) {
         self.sessionID = sessionID
         self.target = target
         self.source = source
         self.readers = readers
         self.fileSystem = fileSystem
+        self.copilotSessionImporter = copilotSessionImporter
+        self.copilotHome = Self.configuredCopilotHome(explicit: copilotHome)
     }
 
     /// Locates the session, migrates it to the target format, and prints resume instructions.
@@ -96,7 +106,20 @@ package struct MigrateRunner {
                 fileSystem: fileSystem,
                 workingDirectoryProvider: Self.logicalWorkingDirectory
             )
+        case .copilotCLI: CopilotCLIMigrator(
+                fileSystem: fileSystem,
+                copilotHome: copilotHome ?? fileSystem.homeDirectoryForCurrentUser.appendingPathComponent(".copilot"),
+                importer: copilotSessionImporter
+            )
         }
+    }
+
+    private static func configuredCopilotHome(explicit: URL?) -> URL? {
+        if let explicit { return explicit }
+        guard let configured = ProcessInfo.processInfo.environment["COPILOT_HOME"], !configured.isEmpty else {
+            return nil
+        }
+        return URL(filePath: configured)
     }
 
     /// The shell's logical cwd (symlinks preserved), falling back to the physical one.
@@ -115,7 +138,7 @@ package struct MigrateRunner {
                 writtenJSONLPath: path,
                 fileSystem: fileSystem
             )
-        case .codex, .cursor, .kimiCode:
+        case .codex, .cursor, .kimiCode, .copilotCLI:
             resolvedProjectPath
         }
         let cwdLine = cwdForHint.map { "  cd -- \(Self.shellQuoted($0))\n" } ?? ""
@@ -155,6 +178,7 @@ package struct MigrateRunner {
         case .codex: "codex resume \(sessionID)"
         case .cursor: "cursor-agent --resume \(sessionID)"
         case .kimiCode: "kimi --session \(sessionID)"
+        case .copilotCLI: "copilot --resume=\(sessionID)"
         }
     }
 
@@ -177,8 +201,8 @@ package struct MigrateRunner {
             return fileName == "store"
                 ? URL(filePath: path).deletingLastPathComponent().lastPathComponent
                 : fileName
-        case .kimiCode:
-            // kimi returns the session directory; its last component is the resumable id.
+        case .kimiCode, .copilotCLI:
+            // Both importers return their session directory; its last component is the resumable id.
             return fileName
         }
     }

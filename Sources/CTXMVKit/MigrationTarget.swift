@@ -4,4 +4,5 @@ package enum MigrationTarget: String, CaseIterable, Sendable {
     case codex
     case cursor
     case kimiCode = "kimi-code"
+    case copilotCLI = "copilot-cli"
 }

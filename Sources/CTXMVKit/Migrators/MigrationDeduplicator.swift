@@ -169,6 +169,17 @@ enum MigrationDeduplicator {
         return MigratorUtils.hexString(Data(digest))
     }
 
+    /// Produces a filesystem-safe key for a source identity and its content snapshot.
+    static func migrationKey(for origin: MigrationOrigin) -> String {
+        let identity = [
+            origin.originSource.rawValue,
+            origin.originId,
+            origin.originDigest,
+        ].joined(separator: "\u{1f}")
+        let digest = SHA256.hash(data: Data(identity.utf8))
+        return MigratorUtils.hexString(Data(digest))
+    }
+
     private static func readMigrationMeta(
         from file: URL,
         fileSystem: any FileSystemProtocol,
