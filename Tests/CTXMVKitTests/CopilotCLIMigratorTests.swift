@@ -3,8 +3,8 @@ import Foundation
 import Testing
 
 struct CopilotCLIMigratorTests {
-    private let home = URL(filePath: "/synthetic/home", isDirectory: true)
-    private let copilotHome = URL(filePath: "/synthetic/home/.copilot", isDirectory: true)
+    private let home = URL(fileURLWithPath: "/synthetic/home", isDirectory: true)
+    private let copilotHome = URL(fileURLWithPath: "/synthetic/home/.copilot", isDirectory: true)
     private let projectPath = "/synthetic/project:with # characters"
 
     @Test("migration uses the supported semantic import format")
