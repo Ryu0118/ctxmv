@@ -113,16 +113,29 @@ package struct CopilotCommandSessionImporter: CopilotSessionImporter {
         return arguments
     }
 
+    package static func processEnvironment(
+        copilotHome: URL,
+        path: String,
+        temporaryDirectory: String
+    ) -> [String: String] {
+        [
+            "PATH": path,
+            "HOME": copilotHome.deletingLastPathComponent().path,
+            "TMPDIR": temporaryDirectory,
+            "COPILOT_HOME": copilotHome.path,
+            "COPILOT_OFFLINE": "true",
+        ]
+    }
+
     private func run(_ arguments: [String], copilotHome: URL) throws -> Data {
         let process = Process()
         process.executableURL = URL(filePath: "/usr/bin/env")
         process.arguments = [Self.commandName] + arguments
-        process.environment = [
-            "PATH": ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/bin",
-            "HOME": copilotHome.deletingLastPathComponent().path,
-            "TMPDIR": ProcessInfo.processInfo.environment["TMPDIR"] ?? NSTemporaryDirectory(),
-            "COPILOT_HOME": copilotHome.path,
-        ]
+        process.environment = Self.processEnvironment(
+            copilotHome: copilotHome,
+            path: ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/bin",
+            temporaryDirectory: ProcessInfo.processInfo.environment["TMPDIR"] ?? NSTemporaryDirectory()
+        )
 
         let output = Pipe()
         process.standardOutput = output

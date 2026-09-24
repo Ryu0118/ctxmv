@@ -16,6 +16,24 @@ struct CopilotCommandSessionImporterTests {
         #expect(arguments[5] == "--dry-run")
     }
 
+    @Test("session import disables GitHub server contact and telemetry")
+    func importProcessRunsOfflineWithOnlyRequiredEnvironment() {
+        let copilotHome = URL(filePath: "/synthetic/home/.copilot")
+        let environment = CopilotCommandSessionImporter.processEnvironment(
+            copilotHome: copilotHome,
+            path: "/synthetic/bin",
+            temporaryDirectory: "/synthetic/tmp"
+        )
+
+        #expect(environment == [
+            "PATH": "/synthetic/bin",
+            "HOME": "/synthetic/home",
+            "TMPDIR": "/synthetic/tmp",
+            "COPILOT_HOME": "/synthetic/home/.copilot",
+            "COPILOT_OFFLINE": "true",
+        ])
+    }
+
     @Test("Copilot resume hints keep migrated sessions local")
     func resumeCommandKeepsSessionLocal() {
         #expect(
