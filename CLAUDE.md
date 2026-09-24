@@ -1,6 +1,6 @@
 # ctxmv
 
-CLI tool to read, display, export, and migrate conversation sessions across AI coding agents (Claude Code, Codex, Cursor, and Kimi Code). GitHub Copilot CLI is supported as a source.
+CLI tool to read, display, export, and migrate conversation sessions across AI coding agents (Claude Code, Codex, Cursor, Kimi Code, and GitHub Copilot CLI).
 
 ## Commands
 

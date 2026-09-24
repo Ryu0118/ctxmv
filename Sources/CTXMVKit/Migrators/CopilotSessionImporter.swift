@@ -35,11 +35,11 @@ package struct CopilotCommandSessionImporter: CopilotSessionImporter {
         let transcriptURL = try stage(semanticJSONL)
         defer { try? FileManager.default.removeItem(at: transcriptURL.deletingLastPathComponent()) }
 
-        var validationArguments = importArguments(
+        let validationArguments = Self.importArguments(
             transcriptURL: transcriptURL,
-            workingDirectory: workingDirectory
+            workingDirectory: workingDirectory,
+            dryRun: true
         )
-        validationArguments.insert("--dry-run", at: 3)
         let validationOutput = try run(validationArguments, copilotHome: copilotHome)
         guard let validation = try? MigratorUtils.jsonDecoder.decode(ImportOutput.self, from: validationOutput),
               validation.succeeded else {
@@ -47,9 +47,10 @@ package struct CopilotCommandSessionImporter: CopilotSessionImporter {
         }
 
         let output = try run(
-            importArguments(
+            Self.importArguments(
                 transcriptURL: transcriptURL,
-                workingDirectory: workingDirectory
+                workingDirectory: workingDirectory,
+                dryRun: false
             ),
             copilotHome: copilotHome
         )
@@ -90,19 +91,26 @@ package struct CopilotCommandSessionImporter: CopilotSessionImporter {
         return transcriptURL
     }
 
-    private func importArguments(
+    package static func importArguments(
         transcriptURL: URL,
-        workingDirectory: String
+        workingDirectory: String,
+        dryRun: Bool
     ) -> [String] {
-        [
+        var arguments = [
             "--no-auto-update",
+            "--no-remote",
+            "--no-remote-export",
             "sessions",
             "import",
+        ]
+        if dryRun { arguments.append("--dry-run") }
+        arguments += [
             "--output", "json",
             "--working-directory", workingDirectory,
-            "--name", Self.importedSessionName,
+            "--name", importedSessionName,
             transcriptURL.path,
         ]
+        return arguments
     }
 
     private func run(_ arguments: [String], copilotHome: URL) throws -> Data {

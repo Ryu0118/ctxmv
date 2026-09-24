@@ -88,7 +88,7 @@ ctxmv <session-id> --to copilot-cli
 ctxmv <session-id> --from copilot-cli --to codex
 ```
 
-Migrating to Copilot CLI requires version 1.0.85 or newer. Copilot CLI syncs local sessions to GitHub by default. Review its [`remoteExport` setting](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference) before importing sensitive conversations.
+Migrating to Copilot CLI requires version 1.0.85 or newer. Copilot CLI syncs sessions to GitHub by default. To keep migrated sessions local, ctxmv disables remote access and export during import and includes the same flags in the resume command; it does not change your Copilot settings.
 
 After migration, the tool prints the resume command:
 

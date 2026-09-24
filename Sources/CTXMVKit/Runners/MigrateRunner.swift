@@ -129,7 +129,7 @@ package struct MigrateRunner {
 
     /// Prints the exact resume command, reusing the existing session path when migration was skipped as a duplicate.
     private func printResumeHint(path: String, sessionID: String, projectPath: String?, alreadyMigrated: Bool) {
-        let resumeCommand = resumeCommand(forSessionID: sessionID)
+        let resumeCommand = Self.resumeCommand(for: target, sessionID: sessionID)
         let resolvedProjectPath = ProjectPathResolver.resolveProjectPath(projectPath, fileSystem: fileSystem)
         let cwdForHint: String? = switch target {
         case .claudeCode:
@@ -172,13 +172,14 @@ package struct MigrateRunner {
         }
     }
 
-    private func resumeCommand(forSessionID sessionID: String) -> String {
+    /// Builds the native resume command for a migrated session.
+    package static func resumeCommand(for target: MigrationTarget, sessionID: String) -> String {
         switch target {
         case .claudeCode: "claude --resume \(sessionID)"
         case .codex: "codex resume \(sessionID)"
         case .cursor: "cursor-agent --resume \(sessionID)"
         case .kimiCode: "kimi --session \(sessionID)"
-        case .copilotCLI: "copilot --resume=\(sessionID)"
+        case .copilotCLI: "copilot --no-remote --no-remote-export --resume=\(sessionID)"
         }
     }
 
