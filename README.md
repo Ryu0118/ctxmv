@@ -24,7 +24,7 @@
 - Codex
 - Cursor (CLI agent via `cursor-agent`, not the GUI app)
 - Kimi Code (`kimi` CLI)
-- GitHub Copilot CLI (source)
+- GitHub Copilot CLI (`copilot` CLI; source and target)
 
 ## Install
 
@@ -81,9 +81,14 @@ ctxmv <session-id> --to cursor
 # Any → Kimi Code
 ctxmv <session-id> --to kimi-code
 
+# Any → GitHub Copilot CLI
+ctxmv <session-id> --to copilot-cli
+
 # GitHub Copilot CLI → Codex
 ctxmv <session-id> --from copilot-cli --to codex
 ```
+
+Migrating to Copilot CLI requires version 1.0.85 or newer. Copilot CLI syncs local sessions to GitHub by default. Review its [`remoteExport` setting](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference) before importing sensitive conversations.
 
 After migration, the tool prints the resume command:
 

@@ -39,7 +39,7 @@ struct CopilotSourceMigrateRunnerTests {
                 path.contains("/.codex/sessions/") && path.hasSuffix(".jsonl")
             case .kimiCode:
                 path.hasSuffix("/agents/main/wire.jsonl")
-            case .cursor:
+            case .copilotCLI, .cursor:
                 false
             }
         })
@@ -59,7 +59,7 @@ struct CopilotSourceMigrateRunnerTests {
         case .kimiCode:
             #expect(output.contains("context.append_message"))
             #expect(output.contains("context.append_loop_event"))
-        case .cursor:
+        case .copilotCLI, .cursor:
             Issue.record("Unexpected migration target: \(target.rawValue)")
         }
     }
