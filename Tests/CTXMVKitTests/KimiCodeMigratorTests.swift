@@ -39,7 +39,7 @@ struct KimiCodeMigratorTests {
     func migrateWritesFilesAppendsSessionIndex() throws {
         let (mockFS, _, sessionID) = try makeMigratedSession()
         let indexPath = "/Users/tester/.kimi-code/session_index.jsonl"
-        let index = try #require(mockFS.files[indexPath]).flatMap { String(data: $0, encoding: .utf8) }
+        let index = mockFS.files[indexPath].flatMap { String(data: $0, encoding: .utf8) }
         #expect(index?.contains(sessionID) == true)
     }
 
@@ -51,6 +51,48 @@ struct KimiCodeMigratorTests {
         let wsObject = try #require((try? JSONSerialization.jsonObject(with: wsData)) as? [String: Any])
         let workspaces = try #require(wsObject["workspaces"] as? [String: Any])
         #expect(workspaces.keys.contains { $0.hasPrefix("wd_proj_") })
+    }
+
+    @Test("migrate canonicalizes symlinked project paths for TUI resume")
+    func migrateCanonicalizesSymlinkedProjectPath() throws {
+        let (physicalPath, logicalPath, cleanup) = try TestFixtures.makeSymlinkedProject()
+        defer { cleanup() }
+
+        let mockFS = MockFileManager()
+        mockFS.homeDirectoryForCurrentUser = URL(fileURLWithPath: "/Users/tester")
+        let conversation = TestFixtures.makeConversation(
+            id: "kimi-symlinked-project",
+            source: .copilotCLI,
+            projectPath: logicalPath
+        )
+
+        guard case let .written(path, sessionID) = try makeMigrator(mockFS).migrate(conversation) else {
+            Issue.record("expected .written")
+            return
+        }
+
+        let canonicalPhysicalPath = KimiCodeWorkspace.canonicalRoot(physicalPath)
+        let physicalWorkspaceID = KimiCodeWorkspace.workspaceId(forRoot: canonicalPhysicalPath)
+        #expect(path.contains("/\(physicalWorkspaceID)/"))
+
+        let indexPath = "/Users/tester/.kimi-code/session_index.jsonl"
+        let indexText = try #require(mockFS.files[indexPath]).flatMap { String(data: $0, encoding: .utf8) }
+        let indexLine = try #require(indexText?.split(separator: "\n").first)
+        let indexEntry = try JSONDecoder().decode(KimiCodeWorkspace.IndexEntry.self, from: Data(indexLine.utf8))
+        #expect(indexEntry.sessionId == sessionID)
+        #expect(indexEntry.workDir == canonicalPhysicalPath)
+    }
+
+    @Test("canonicalRoot resolves the system temporary-directory alias")
+    func canonicalRootResolvesSystemTemporaryDirectoryAlias() {
+        let aliasPath = "/tmp"
+        let expectedPath = if let destination = try? FileManager.default.destinationOfSymbolicLink(atPath: aliasPath) {
+            destination.hasPrefix("/") ? destination : "/" + destination
+        } else {
+            aliasPath
+        }
+
+        #expect(KimiCodeWorkspace.canonicalRoot(aliasPath) == expectedPath)
     }
 
     @Test("re-migrating the same conversation is blocked as already migrated")

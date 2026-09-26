@@ -14,7 +14,7 @@
 
 ## Features
 
-- 🔀 Migrate sessions between any pair of agents (resume-compatible)
+- 🔀 Migrate sessions between supported agents (resume-compatible)
 - 📋 List sessions across all agents in a unified table
 - 💬 Show conversation messages with role-colored output
 
@@ -24,6 +24,7 @@
 - Codex
 - Cursor (CLI agent via `cursor-agent`, not the GUI app)
 - Kimi Code (`kimi` CLI)
+- GitHub Copilot CLI (`copilot` CLI; source and target)
 
 ## Install
 
@@ -79,14 +80,22 @@ ctxmv <session-id> --to cursor
 
 # Any → Kimi Code
 ctxmv <session-id> --to kimi-code
+
+# Any → GitHub Copilot CLI
+ctxmv <session-id> --to copilot-cli
+
+# GitHub Copilot CLI → Codex
+ctxmv <session-id> --from copilot-cli --to codex
 ```
+
+Migrating to Copilot CLI requires version 1.0.85 or newer. Copilot CLI syncs sessions to GitHub by default. To keep migrated sessions local, ctxmv disables remote access and export during import and includes the same flags in the resume command; it does not change your Copilot settings.
 
 After migration, the tool prints the resume command:
 
 ```
 ✅ Session written to: /path/to/session
 To resume:
-  cd /your/project
+  cd -- '/your/project'
   codex resume <new-session-id>
 ```
 
@@ -102,6 +111,7 @@ ctxmv list
 ctxmv list --source claude-code
 ctxmv list --source codex
 ctxmv list --source cursor
+ctxmv list --source copilot-cli
 
 # Filter by project path
 ctxmv list --project /path/to/project
@@ -118,6 +128,7 @@ ctxmv show <session-id>
 
 # Restrict search to a specific agent
 ctxmv show <session-id> --source claude-code
+ctxmv show <session-id> --source copilot-cli
 
 # Show raw content without compacting XML-like blocks
 ctxmv show <session-id> --raw

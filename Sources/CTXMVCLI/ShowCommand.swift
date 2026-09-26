@@ -12,7 +12,7 @@ struct ShowCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Show all messages and bypass large-session protection")
     var all: Bool = false
 
-    @Option(name: .long, help: "Restrict search to a specific source (claude-code, codex, cursor)")
+    @Option(name: .long, help: "Restrict search to a specific source (\(AgentSource.allCases.map(\.rawValue).joined(separator: ", ")))")
     var source: AgentSource?
 
     @Option(name: .long, help: "Maximum number of most recent messages to show")

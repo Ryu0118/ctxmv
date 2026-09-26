@@ -6,7 +6,7 @@ struct ListCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Exclude claude-mem observer sessions")
     var excludeObserver: Bool = false
 
-    @Option(name: .long, help: "Filter by source (claude-code, codex, cursor)")
+    @Option(name: .long, help: "Filter by source (\(AgentSource.allCases.map(\.rawValue).joined(separator: ", ")))")
     var source: AgentSource?
 
     @Option(name: .long, help: "Filter by project path")

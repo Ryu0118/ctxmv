@@ -5,40 +5,50 @@ import Rainbow
 /// Finds a session, migrates it to a target agent format, and prints resume instructions.
 package struct MigrateRunner {
     private let sessionID: String
-    private let target: AgentSource
+    private let target: MigrationTarget
     private let source: AgentSource?
 
     private let readers: [any SessionReader]
     private let fileSystem: any FileSystemProtocol
+    private let copilotSessionImporter: any CopilotSessionImporter
+    private let copilotHome: URL?
 
     /// Creates a runner using the default file system and SQLite provider.
     package init(
         sessionID: String,
-        target: AgentSource,
+        target: MigrationTarget,
         source: AgentSource? = nil,
         fileSystem: any FileSystemProtocol = DefaultFileSystem(),
-        sqlite: any SQLiteReader = DefaultSQLiteReader()
+        sqlite: any SQLiteReader = DefaultSQLiteReader(),
+        copilotSessionImporter: any CopilotSessionImporter = CopilotCommandSessionImporter(),
+        copilotHome: URL? = nil
     ) {
         self.sessionID = sessionID
         self.target = target
         self.source = source
         self.fileSystem = fileSystem
+        self.copilotSessionImporter = copilotSessionImporter
+        self.copilotHome = Self.configuredCopilotHome(explicit: copilotHome)
         readers = SessionReaderFactory.make(fileSystem: fileSystem, sqlite: sqlite)
     }
 
     /// Creates a runner with injected readers for tests.
     package init(
         sessionID: String,
-        target: AgentSource,
+        target: MigrationTarget,
         source: AgentSource? = nil,
         readers: [any SessionReader],
-        fileSystem: any FileSystemProtocol = DefaultFileSystem()
+        fileSystem: any FileSystemProtocol = DefaultFileSystem(),
+        copilotSessionImporter: any CopilotSessionImporter = CopilotCommandSessionImporter(),
+        copilotHome: URL? = nil
     ) {
         self.sessionID = sessionID
         self.target = target
         self.source = source
         self.readers = readers
         self.fileSystem = fileSystem
+        self.copilotSessionImporter = copilotSessionImporter
+        self.copilotHome = Self.configuredCopilotHome(explicit: copilotHome)
     }
 
     /// Locates the session, migrates it to the target format, and prints resume instructions.
@@ -85,15 +95,31 @@ package struct MigrateRunner {
         switch target {
         // `PWD` is the shell's logical cwd (symlinks preserved); reading it here keeps env access
         // at the CLI boundary rather than inside the migrator. See ``ClaudeProjectAliasResolver``.
-        case .claudeCode: ClaudeCodeMigrator(logicalCwd: ProcessInfo.processInfo.environment["PWD"])
-        case .codex: CodexMigrator()
-        case .cursor: CursorMigrator()
+        case .claudeCode: ClaudeCodeMigrator(
+                fileSystem: fileSystem,
+                logicalCwd: ProcessInfo.processInfo.environment["PWD"]
+            )
+        case .codex: CodexMigrator(fileSystem: fileSystem)
+        case .cursor: CursorMigrator(fileSystem: fileSystem)
         // Same `PWD` rationale as above: kimi's workspace id hashes the root path.
         case .kimiCode: KimiCodeMigrator(
                 fileSystem: fileSystem,
                 workingDirectoryProvider: Self.logicalWorkingDirectory
             )
+        case .copilotCLI: CopilotCLIMigrator(
+                fileSystem: fileSystem,
+                copilotHome: copilotHome ?? fileSystem.homeDirectoryForCurrentUser.appendingPathComponent(".copilot"),
+                importer: copilotSessionImporter
+            )
         }
+    }
+
+    private static func configuredCopilotHome(explicit: URL?) -> URL? {
+        if let explicit { return explicit }
+        guard let configured = ProcessInfo.processInfo.environment["COPILOT_HOME"], !configured.isEmpty else {
+            return nil
+        }
+        return URL(filePath: configured)
     }
 
     /// The shell's logical cwd (symlinks preserved), falling back to the physical one.
@@ -103,7 +129,7 @@ package struct MigrateRunner {
 
     /// Prints the exact resume command, reusing the existing session path when migration was skipped as a duplicate.
     private func printResumeHint(path: String, sessionID: String, projectPath: String?, alreadyMigrated: Bool) {
-        let resumeCommand = resumeCommand(forSessionID: sessionID)
+        let resumeCommand = Self.resumeCommand(for: target, sessionID: sessionID)
         let resolvedProjectPath = ProjectPathResolver.resolveProjectPath(projectPath, fileSystem: fileSystem)
         let cwdForHint: String? = switch target {
         case .claudeCode:
@@ -112,10 +138,10 @@ package struct MigrateRunner {
                 writtenJSONLPath: path,
                 fileSystem: fileSystem
             )
-        case .codex, .cursor, .kimiCode:
+        case .codex, .cursor, .kimiCode, .copilotCLI:
             resolvedProjectPath
         }
-        let cwdLine = cwdForHint.map { "  cd \($0)\n" } ?? ""
+        let cwdLine = cwdForHint.map { "  cd -- \(Self.shellQuoted($0))\n" } ?? ""
         let claudeCwdNote = """
         ⚠️ Claude Code resolves sessions by current working directory (~/.claude/projects/<encoded cwd>/).
            Running `claude` from a different project folder will not find this session.
@@ -146,13 +172,20 @@ package struct MigrateRunner {
         }
     }
 
-    private func resumeCommand(forSessionID sessionID: String) -> String {
+    /// Builds the native resume command for a migrated session.
+    package static func resumeCommand(for target: MigrationTarget, sessionID: String) -> String {
         switch target {
         case .claudeCode: "claude --resume \(sessionID)"
         case .codex: "codex resume \(sessionID)"
         case .cursor: "cursor-agent --resume \(sessionID)"
         case .kimiCode: "kimi --session \(sessionID)"
+        case .copilotCLI: "copilot --no-remote --no-remote-export --resume=\(sessionID)"
         }
+    }
+
+    /// Quotes one argument for the shell command hints printed by the CLI.
+    package static func shellQuoted(_ argument: String) -> String {
+        "'\(argument.replacingOccurrences(of: "'", with: "'\\''"))'"
     }
 
     /// Derives the resumable session ID from the storage path format of each target agent.
@@ -169,8 +202,8 @@ package struct MigrateRunner {
             return fileName == "store"
                 ? URL(filePath: path).deletingLastPathComponent().lastPathComponent
                 : fileName
-        case .kimiCode:
-            // kimi returns the session directory; its last component is the resumable id.
+        case .kimiCode, .copilotCLI:
+            // Both importers return their session directory; its last component is the resumable id.
             return fileName
         }
     }

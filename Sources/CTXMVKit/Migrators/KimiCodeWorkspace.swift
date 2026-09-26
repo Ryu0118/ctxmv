@@ -3,6 +3,11 @@
 #else
     import Crypto
 #endif
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#endif
 import Foundation
 
 /// Helpers for kimi-code's workspace directory naming.
@@ -12,6 +17,20 @@ enum KimiCodeWorkspace {
         static let hashPrefixLength = 12
         static let maxSlugLength = 40
         static let fallbackSlug = "workspace"
+    }
+
+    /// Resolves symlink aliases to match the canonical working directory used by Kimi Code.
+    static func canonicalRoot(_ root: String) -> String {
+        let standardizedRoot = URL(fileURLWithPath: root).standardizedFileURL.path
+        #if canImport(Darwin) || canImport(Glibc)
+            return standardizedRoot.withCString { path in
+                guard let resolvedPath = realpath(path, nil) else { return standardizedRoot }
+                defer { free(resolvedPath) }
+                return String(cString: resolvedPath)
+            }
+        #else
+            return URL(fileURLWithPath: standardizedRoot).resolvingSymlinksInPath().standardizedFileURL.path
+        #endif
     }
 
     /// kimi-code names each workspace `wd_<slug>_<sha256(normalized-root)[:12]>`, where `slug` is
