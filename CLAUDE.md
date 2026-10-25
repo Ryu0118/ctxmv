@@ -2,6 +2,10 @@
 
 CLI tool to read, display, export, and migrate conversation sessions across AI coding agents (Claude Code, Codex, Cursor, Kimi Code, and GitHub Copilot CLI).
 
+## Documentation and code
+
+- When documentation and the existing code disagree, follow the conventions used in the existing code, and in your final reply list every inconsistency you found between the documentation and the code.
+
 ## Commands
 
 - Build: `swift build`
