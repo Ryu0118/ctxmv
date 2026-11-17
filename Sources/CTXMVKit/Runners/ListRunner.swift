@@ -154,6 +154,8 @@ package struct ListRunner {
         case .cursor: .magenta
         case .kimiCode: .blue
         case .copilotCLI: .yellow
+        case .zcode: .white
+        case .deepseekHarness: .red
         }
     }
 }
