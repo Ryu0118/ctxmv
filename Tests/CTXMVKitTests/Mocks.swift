@@ -8,6 +8,18 @@ final class MockFileManager: FileSystemProtocol, @unchecked Sendable {
     var files: [String: Data] = [:]
     var directories: [String: [URL]] = [:]
     var fileAttributes: [String: [FileAttributeKey: Any]] = [:]
+    var executablePaths: Set<String> = []
+    var temporaryDirectory: URL = .init(fileURLWithPath: "/mock/tmp", isDirectory: true)
+
+    func isExecutableFile(atPath path: String) -> Bool {
+        executablePaths.contains(path)
+    }
+
+    func removeItem(at url: URL) throws {
+        guard files.removeValue(forKey: url.path) != nil || directories.removeValue(forKey: url.path) != nil else {
+            throw NSError(domain: "MockFS", code: 1)
+        }
+    }
 
     func contentsOfDirectory(atPath path: String) throws -> [String] {
         guard let entries = directories[path] else { throw mockError("No dir: \(path)") }
@@ -46,8 +58,12 @@ final class MockFileManager: FileSystemProtocol, @unchecked Sendable {
     }
 
     func fileExists(atPath path: String, isDirectory: UnsafeMutablePointer<ObjCBool>?) -> Bool {
-        if directories[path] != nil { isDirectory?.pointee = true; return true }
-        if files[path] != nil { isDirectory?.pointee = false; return true }
+        if directories[path] != nil {
+            isDirectory?.pointee = true; return true
+        }
+        if files[path] != nil {
+            isDirectory?.pointee = false; return true
+        }
         return false
     }
 
